@@ -1,0 +1,20 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+main
+
+# Environment Variables (sensitive information)
+.env
+
+# Go workspace
+vendor/
+go.work
+
+# OS specific files (MacOS)
+.DS_Store
+.AppleDouble
+.LSOverride
