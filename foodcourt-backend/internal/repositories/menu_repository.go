@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	// Pastikan jalur import ini sesuai dengan nama modulmu!
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -24,7 +23,6 @@ func NewMenuRepository(db *gorm.DB) MenuRepository {
 
 // 4. Implementasi: Fungsi untuk menyimpan menu ke database
 func (r *menuRepository) CreateMenu(menu *models.Menu) error {
-	// GORM akan otomatis membuat query "INSERT INTO menus..."
 	return r.db.Create(menu).Error
 }
 
