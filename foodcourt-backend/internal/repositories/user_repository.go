@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	// Pastikan import ini sesuai dengan namamu
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"gorm.io/gorm"
 )
