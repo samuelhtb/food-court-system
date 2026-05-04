@@ -6,77 +6,62 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
+	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/dto"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/services"
 )
 
-// UserHandler adalah struct yang menjembatani jalur web (Gin) dengan logika bisnis (Service)
 type UserHandler struct {
 	userService services.UserService
 	secretKey   string
 }
 
-// NewUserHandler berfungsi untuk merakit handler ini
 func NewUserHandler(userService services.UserService, secretKey string) *UserHandler {
 	return &UserHandler{userService, secretKey}
 }
 
-// Register menerima permintaan pendaftaran akun baru
 func (h *UserHandler) Register(c *gin.Context) {
-	var user models.User
-	
-	// 1. Tangkap data JSON dari request dan masukkan ke struct User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak valid"})
+	var req dto.RegisterRequest // Get data from request body into DTO
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "data tidak valid atau kurang lengkap"})
 		return
 	}
 
-	// 2. Suruh Service untuk menyimpan data tersebut
-	if err := h.userService.RegisterTenant(&user); err != nil {
+	if err := h.userService.RegisterTenant(req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 3. Kembalikan respon sukses
 	c.JSON(http.StatusCreated, gin.H{"message": "Registrasi berhasil, silakan login"})
 }
 
-// Login menerima email & password, lalu mengembalikan Token JWT
 func (h *UserHandler) Login(c *gin.Context) {
-	// Struct sementara untuk menangkap input login
-	var loginData struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
+	var req dto.LoginRequest
 
-	// 1. Tangkap input login
-	if err := c.ShouldBindJSON(&loginData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email dan password wajib diisi"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email dan password wajib diisi"})
 		return
 	}
 
-	// 2. Suruh Service untuk mengecek ke database
-	user, err := h.userService.Login(loginData.Email, loginData.Password)
+	user, err := h.userService.Login(req)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau password salah"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 3. Jika berhasil, buatkan Token (Tiket Masuk) JWT
+	// Token generation
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"role":    user.Role,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(), // Token berlaku 24 jam
 	})
 
-	// 4. Stempel token tersebut dengan Kunci Rahasia
 	tokenString, err := token.SignedString([]byte(h.secretKey))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token otorisasi"})
 		return
 	}
 
-	// 5. Berikan token ke pengguna
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login berhasil",
 		"token":   tokenString,
