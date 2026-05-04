@@ -29,6 +29,7 @@ func (s *userService) RegisterTenant(user *models.User) error {
 	}
 	
 	user.Password = string(hashedPassword)
+	user.PasswordHash = string(hashedPassword)
 	user.Role = "tenant"
 	
 	return s.repo.CreateUser(user)
