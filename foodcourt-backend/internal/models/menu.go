@@ -14,6 +14,7 @@ type Menu struct {
 	Name        string         `gorm:"type:varchar(100);not null" json:"name"`
 	Description string         `gorm:"type:text" json:"description"`
 	Price       float64        `gorm:"type:numeric;not null" json:"price"`
+	Stock       int            `gorm:"type:int;not null;default:0" json:"stock"` // Kita pertahankan stock
 	ImageURL    string         `gorm:"type:varchar(255)" json:"image_url"`
 	IsAvailable bool           `gorm:"default:true" json:"is_available"`
 	CreatedAt   time.Time      `json:"created_at"`
