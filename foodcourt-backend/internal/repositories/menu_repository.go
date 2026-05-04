@@ -30,8 +30,8 @@ func (r *menuRepository) CreateMenu(menu *models.Menu) error {
 	return r.db.Create(menu).Error
 }
 
-// 5. Implementasi: Fungsi untuk mengambil semua menu dari database
-func (r *menuRepository) GetAllMenus() ([]models.Menu, error) {
+// 2. Implementasi: Perhatikan parameternya (tenantID uuid.UUID)
+func (r *menuRepository) GetMenusByTenantID(tenantID uuid.UUID) ([]models.Menu, error) {
 	var menus []models.Menu
 	err := r.db.Where("tenant_id = ?", tenantID).Find(&menus).Error
 	return menus, err
