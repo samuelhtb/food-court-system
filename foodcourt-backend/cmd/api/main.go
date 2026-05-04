@@ -11,6 +11,7 @@ import (
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/handlers"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/repositories"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/services"
+	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 )
 
 func main() {
@@ -26,6 +27,14 @@ func main() {
 
 	// db connection
 	db := config.ConnectDB()
+
+	// Auto-migrate database
+	// errMigrate := db.AutoMigrate(&models.User{})
+	// if errMigrate != nil {
+	// 	log.Println("Gagal melakukan migrasi database:", errMigrate)
+	// } else {
+	// 	log.Println("Database berhasil disinkronkan!")
+	// }
 
 	// dependency injection
 	userRepo := repositories.NewUserRepository(db)
