@@ -18,3 +18,7 @@ go.work
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Postman files
+.postman/
+postman/

@@ -1,38 +1,35 @@
 package config
 
 import (
-	"log"
-	"os"
+    "log"
+    "os"
 
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+    "github.com/joho/godotenv"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
 )
 
-// DB adalah variabel global untuk menampung koneksi database
 var DB *gorm.DB
 
-func ConnectDB() {
-	// 1. Load file .env (hanya jika ada, berguna untuk development lokal)
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Peringatan: File .env tidak ditemukan, menggunakan environment variable bawaan sistem")
-	}
+func ConnectDB() *gorm.DB {
+    err := godotenv.Load()
+    if err != nil {
+        log.Println("Warning: .env file not found, using default environment variables")
+    }
 
-	// 2. Ambil URL Database dari environment variable
-	dsn := os.Getenv("SUPABASE_DB_URL")
-	if dsn == "" {
-		log.Fatal("Error: SUPABASE_DB_URL belum diatur di file .env")
-	}
+    dsn := os.Getenv("SUPABASE_DB_URL")
+    if dsn == "" {
+        log.Fatal("Error: SUPABASE_DB_URL is not set in the environment variables")
+    }
 
-	// 3. Buka koneksi ke PostgreSQL (Supabase) menggunakan GORM
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Gagal terhubung ke database Supabase: ", err)
-	}
+    database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        log.Fatal("Failed to connect to database: ", err)
+    }
 
-	log.Println("✅ Berhasil terhubung ke database Supabase!")
+    log.Println("Successfully connected!")
 
-	// 4. Masukkan koneksi ke variabel global agar bisa dipakai oleh Repository nanti
-	DB = database
+    DB = database
+
+    return database
 }
