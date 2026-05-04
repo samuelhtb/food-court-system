@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"net/http"
@@ -14,12 +14,13 @@ func AuthMiddleware(secretKey string) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses ditolak, butuh token!"})
-			c.Abort() 
+			c.Abort()
 			return
 		}
 
-		tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
-		
+		// Peningkatan: TrimPrefix lebih aman dan rapi daripada Replace
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
 		// Validasi token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
@@ -32,8 +33,11 @@ func AuthMiddleware(secretKey string) gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			c.Set("userID", claims["user_id"])
-			c.Set("userRole", claims["role"])
+			// PERBAIKAN KRUSIAL: Gunakan "user_id" agar sinkron dengan menu_handler.go
+			c.Set("user_id", claims["user_id"]) 
+			
+			// Ubah juga menjadi "role" agar seragam format penamaannya (snake_case)
+			c.Set("role", claims["role"]) 
 		}
 
 		c.Next()
