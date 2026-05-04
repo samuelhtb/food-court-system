@@ -2,14 +2,16 @@ package services
 
 import (
 	"errors"
+
+	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/dto"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/repositories"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
-	RegisterTenant(user *models.User) error
-	Login(email, password string) (*models.User, error)
+	RegisterTenant(req dto.RegisterRequest) error
+	Login(req dto.LoginRequest) (*models.User, error)
 }
 
 type userService struct {
@@ -20,31 +22,37 @@ func NewUserService(repo repositories.UserRepository) UserService {
 	return &userService{repo}
 }
 
-// Register Tenant oleh Admin
-func (s *userService) RegisterTenant(user *models.User) error {
-	// 1. Password encrypt: cost 10
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+func (s *userService) RegisterTenant(req dto.RegisterRequest) error {
+	// 1. Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
 	if err != nil {
-		return err
+		return errors.New("gagal mengamankan password")
 	}
-	
-	user.Password = string(hashedPassword)
-	user.PasswordHash = string(hashedPassword)
-	user.Role = "tenant"
-	
-	return s.repo.CreateUser(user)
+
+	// Mapping DTO into Model
+	user := models.User{
+		Username:     req.Username,
+		Email:        req.Email,
+		Name:         req.Name,
+		TenantName:   req.TenantName,
+		PasswordHash: string(hashedPassword),
+		Role:         "tenant",
+	}
+
+	// Save to DB
+	return s.repo.CreateUser(&user)
 }
 
-// Login Tenant/Admin
-func (s *userService) Login(email, password string) (*models.User, error) {
-	user, err := s.repo.GetUserByEmail(email)
+func (s *userService) Login(req dto.LoginRequest) (*models.User, error) {
+	user, err := s.repo.GetUserByEmail(req.Email)
 	if err != nil {
-		return nil, errors.New("user tidak ditemukan")
+		return nil, errors.New("email atau password salah")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	// Compare password
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
-		return nil, errors.New("password salah")
+		return nil, errors.New("email atau password salah")
 	}
 
 	return user, nil
