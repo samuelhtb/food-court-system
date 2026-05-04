@@ -58,7 +58,7 @@ func main() {
 	protected := r.Group("/api/v1")
 	// Pastikan AuthMiddleware kamu menerima secretKey jika desain kodemu membutuhkannya
 	// Ubah menjadi middleware.AuthMiddleware() jika tidak butuh parameter secretKey
-	protected.Use(middleware.AuthMiddleware(secretKey)) 
+	protected.Use(middlewares.AuthMiddleware(secretKey)) 
 	{
 		protected.POST("/menus", menuHandler.Create)       // Create menu baru
 		protected.GET("/menus", menuHandler.GetAll)        // Lihat semua menu milik tenant tersebut
