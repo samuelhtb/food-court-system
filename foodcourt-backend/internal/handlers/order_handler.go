@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	
+
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/dto"
@@ -103,4 +103,32 @@ func (h *OrderHandler) MarkOrderAsPaid(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pembayaran berhasil! Pesanan telah diteruskan ke dapur tenant."})
+}
+
+func (h *OrderHandler) GetTenantEarnings(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	tenantID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tenant ID format"})
+		return
+	}
+
+	totalEarnings, totalOrders, err := h.service.GetTenantEarnings(tenantID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung laporan pendapatan: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Laporan pendapatan berhasil ditarik",
+		"data": gin.H{
+			"total_orders_completed": totalOrders,
+			"total_earnings":         totalEarnings,
+		},
+	})
 }
