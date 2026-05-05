@@ -38,6 +38,11 @@ func main() {
 	menuService := services.NewMenuService(menuRepo)
 	menuHandler := handlers.NewMenuHandler(menuService)
 
+	// TAMBAHAN: Dependency injection untuk Order
+	orderRepo := repositories.NewOrderRepository(db)
+	orderService := services.NewOrderService(orderRepo, menuRepo)
+	orderHandler := handlers.NewOrderHandler(orderService)
+
 	r := gin.Default()
 
 	// route ping for connection test
@@ -47,11 +52,13 @@ func main() {
 		})
 	})
 
-	// route api
+	// route api tenant
 	api := r.Group("/api/v1")
 	{
 		api.POST("/register", userHandler.Register)
 		api.POST("/login", userHandler.Login)
+
+		api.POST("/orders", orderHandler.Create)
 	}
 
 	// TAMBAHAN: Protected routes (HANYA bisa diakses DENGAN token JWT)
