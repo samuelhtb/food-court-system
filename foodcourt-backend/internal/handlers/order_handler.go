@@ -132,3 +132,23 @@ func (h *OrderHandler) GetTenantEarnings(c *gin.Context) {
 		},
 	})
 }
+
+func (h *OrderHandler) GetOrderDetails(c *gin.Context) {
+	orderIDParam := c.Param("id")
+	orderID, err := uuid.Parse(orderIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format ID Pesanan tidak valid"})
+		return
+	}
+
+	order, err := h.service.GetOrderWithDetails(orderID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pesanan tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Detail pesanan berhasil diambil",
+		"data":    order,
+	})
+}

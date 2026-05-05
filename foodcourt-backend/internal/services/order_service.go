@@ -16,6 +16,7 @@ type OrderService interface {
 	GetAllOrders() ([]models.Order, error)
 	MarkOrderAsPaid(orderID uuid.UUID) error
 	GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error)
+	GetOrderWithDetails(orderID uuid.UUID) (*models.Order, error)
 }
 
 type orderService struct {
@@ -128,4 +129,8 @@ func (s *orderService) MarkOrderAsPaid(orderID uuid.UUID) error {
 
 func (s *orderService) GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error) {
 	return s.orderRepo.GetTenantEarnings(tenantID)
+}
+
+func (s *orderService) GetOrderWithDetails(orderID uuid.UUID) (*models.Order, error) {
+	return s.orderRepo.GetOrderWithDetails(orderID)
 }
