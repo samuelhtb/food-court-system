@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type SubOrder struct {
@@ -14,6 +13,5 @@ type SubOrder struct {
 	TenantStatus  string     `gorm:"type:varchar(50);default:'menunggu_pembayaran'" json:"tenant_status"`
 	CreatedAt     time.Time  `json:"created_at"`
 
-	// Relasi ke OrderItems
 	OrderItems []OrderItem `gorm:"foreignKey:SubOrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 }
