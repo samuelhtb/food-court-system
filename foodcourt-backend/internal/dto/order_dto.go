@@ -13,3 +13,7 @@ type CreateOrderRequest struct {
 	PaymentMethod  string             `json:"payment_method" binding:"required,oneof=cash qris"`
 	Items          []OrderItemRequest `json:"items" binding:"required,min=1,dive"`
 }
+
+type UpdateSubOrderStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=diproses dimasak siap_diambil selesai"`
+}
