@@ -17,6 +17,7 @@ type OrderRepository interface {
 	GetAllOrders() ([]models.Order, error)
 
 	MarkOrderAsPaid(orderID uuid.UUID) error
+	GetOrderByID(orderID uuid.UUID) (*models.Order, error)
 }
 
 type orderRepository struct {
@@ -94,4 +95,10 @@ func (r *orderRepository) MarkOrderAsPaid(orderID uuid.UUID) error {
 
 		return nil
 	})
+}
+
+func (r *orderRepository) GetOrderByID(orderID uuid.UUID) (*models.Order, error) {
+	var order models.Order
+	err := r.db.Where("id = ?", orderID).First(&order).Error
+	return &order, err
 }

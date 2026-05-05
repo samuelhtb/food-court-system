@@ -111,7 +111,16 @@ func (s *orderService) GetAllOrders() ([]models.Order, error) {
 }
 
 func (s *orderService) MarkOrderAsPaid(orderID uuid.UUID) error {
-	// (Opsional: Di masa depan kamu bisa tambahkan validasi di sini untuk 
-	// mengecek apakah order tersebut benar-benar menggunakan metode 'cash')
+	order, err := s.orderRepo.GetOrderByID(orderID)
+	if err != nil {
+		return errors.New("pesanan tidak ditemukan")
+	}
+
+	// Validasi metode pembayaran
+	if order.PaymentMethod != "cash" {
+		return errors.New("ditolak: pesanan QRIS/Non-Tunai hanya bisa dikonfirmasi secara otomatis oleh sistem gateway")
+	}
+
+	// Jika cash, lanjutkan proses lunas
 	return s.orderRepo.MarkOrderAsPaid(orderID)
 }
