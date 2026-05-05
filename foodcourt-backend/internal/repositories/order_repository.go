@@ -1,14 +1,23 @@
 package repositories
 
 import (
+	"github.com/google/uuid"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"gorm.io/gorm"
 )
 
 type OrderRepository interface {
-	CreateFullOrder(order *models.Order, subOrders []models.SubOrder, items []models.OrderItem) error
-	GetSubOrdersByTenant(tenantID string) ([]models.SubOrder, error)
+	CreateOrderTransaction(order *models.Order, menusToUpdate []models.Menu) error
+	
+	// Untuk Tenant
+	GetSubOrdersByTenantID(tenantID uuid.UUID) ([]models.SubOrder, error)
+	UpdateSubOrderStatus(subOrderID, tenantID uuid.UUID, status string) error
+	
+	// Untuk Admin / Kasir
 	GetAllOrders() ([]models.Order, error)
+
+	MarkOrderAsPaid(orderID uuid.UUID) error
+	GetOrderByID(orderID uuid.UUID) (*models.Order, error)
 }
 
 type orderRepository struct {
@@ -19,42 +28,77 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 	return &orderRepository{db}
 }
 
-// Transaksi Database: Menyimpan ke 3 tabel sekaligus dengan aman
-func (r *orderRepository) CreateFullOrder(order *models.Order, subOrders []models.SubOrder, items []models.OrderItem) error {
+func (r *orderRepository) CreateOrderTransaction(order *models.Order, menusToUpdate []models.Menu) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// 1. Simpan Order Utama
+		// 1. Simpan Order Utama (GORM akan otomatis menyimpan SubOrder dan OrderItem)
 		if err := tx.Create(order).Error; err != nil {
-			return err // Jika gagal, batalkan semua (Rollback)
+			return err
 		}
 
-		// 2. Simpan Sub Orders (Pecahan per Tenant)
-		if len(subOrders) > 0 {
-			if err := tx.Create(&subOrders).Error; err != nil {
+		// 2. Potong stok menu
+		for _, menu := range menusToUpdate {
+			if err := tx.Model(&menu).Update("stock", menu.Stock).Error; err != nil {
 				return err
 			}
 		}
 
-		// 3. Simpan Order Items (Detail Makanan)
-		if len(items) > 0 {
-			if err := tx.Create(&items).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil // Jika semua sukses, simpan permanen (Commit)
+		return nil
 	})
 }
 
-// Laporan Pemasukan Tenant (Hanya melihat sub-order miliknya)
-func (r *orderRepository) GetSubOrdersByTenant(tenantID string) ([]models.SubOrder, error) {
+// 1. Upgrade Laporan Pemasukan Tenant (Hanya melihat sub-order miliknya + rincian menu)
+func (r *orderRepository) GetSubOrdersByTenantID(tenantID uuid.UUID) ([]models.SubOrder, error) {
 	var subOrders []models.SubOrder
-	err := r.db.Where("tenant_id = ?", tenantID).Find(&subOrders).Error
+	// Preload wajib agar Tenant tahu harus masak apa
+	err := r.db.Preload("OrderItems").Where("tenant_id = ?", tenantID).Find(&subOrders).Error
 	return subOrders, err
 }
 
-// Laporan Pemasukan Admin (Melihat semua orderan utama)
+// 2. Implementasi Update Status Tenant
+func (r *orderRepository) UpdateSubOrderStatus(subOrderID, tenantID uuid.UUID, status string) error {
+	result := r.db.Model(&models.SubOrder{}).
+		Where("id = ? AND tenant_id = ?", subOrderID, tenantID).
+		Update("tenant_status", status)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// 3. Laporan Pemasukan Admin (Melihat semua orderan utama)
 func (r *orderRepository) GetAllOrders() ([]models.Order, error) {
 	var orders []models.Order
-	err := r.db.Find(&orders).Error
+	// Disarankan menambah Preload SubOrders agar admin bisa lihat rincian pecahannya juga
+	err := r.db.Preload("SubOrders").Find(&orders).Error
 	return orders, err
+}
+
+func (r *orderRepository) MarkOrderAsPaid(orderID uuid.UUID) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Ubah status transaksi utama jadi lunas
+		if err := tx.Model(&models.Order{}).
+			Where("id = ?", orderID).
+			Update("payment_status", "paid").Error; err != nil {
+			return err
+		}
+
+		// 2. Trigger semua dapur (SubOrder) untuk mulai memproses makanan
+		if err := tx.Model(&models.SubOrder{}).
+			Where("parent_order_id = ?", orderID).
+			Update("tenant_status", "diproses").Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (r *orderRepository) GetOrderByID(orderID uuid.UUID) (*models.Order, error) {
+	var order models.Order
+	err := r.db.Where("id = ?", orderID).First(&order).Error
+	return &order, err
 }
