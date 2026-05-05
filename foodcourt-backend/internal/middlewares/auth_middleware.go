@@ -43,3 +43,35 @@ func AuthMiddleware(secretKey string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Ambil role yang tadi disimpan oleh AuthMiddleware
+		userRole, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak: Role tidak teridentifikasi"})
+			c.Abort()
+			return
+		}
+
+		roleStr := userRole.(string)
+		isAllowed := false
+
+		// Cek apakah role user ada di dalam daftar role yang diizinkan
+		for _, role := range allowedRoles {
+			if roleStr == role {
+				isAllowed = true
+				break
+			}
+		}
+
+		// Jika tidak cocok, tendang keluar
+		if !isAllowed {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak: Anda tidak memiliki izin untuk halaman ini"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
