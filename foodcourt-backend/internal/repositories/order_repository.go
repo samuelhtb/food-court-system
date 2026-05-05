@@ -56,17 +56,49 @@ func (r *orderRepository) GetSubOrdersByTenantID(tenantID uuid.UUID) ([]models.S
 
 // 2. Implementasi Update Status Tenant
 func (r *orderRepository) UpdateSubOrderStatus(subOrderID, tenantID uuid.UUID, status string) error {
-	result := r.db.Model(&models.SubOrder{}).
-		Where("id = ? AND tenant_id = ?", subOrderID, tenantID).
-		Update("tenant_status", status)
+	// Gunakan Transaction agar pengecekan dan update aman dari bentrok data
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Update status SubOrder milik tenant tersebut
+		result := tx.Model(&models.SubOrder{}).
+			Where("id = ? AND tenant_id = ?", subOrderID, tenantID).
+			Update("tenant_status", status)
 
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		// 2. Jika status diubah menjadi "selesai", kita lakukan pengecekan cerdas
+		if status == "selesai" {
+			// Cari tahu siapa Parent Order (Order Utama) dari sub-order ini
+			var subOrder models.SubOrder
+			if err := tx.Select("parent_order_id").First(&subOrder, "id = ?", subOrderID).Error; err != nil {
+				return err
+			}
+
+			// Hitung apakah masih ada SubOrder lain dari Parent ini yang statusnya BUKAN "selesai"
+			var incompleteCount int64
+			if err := tx.Model(&models.SubOrder{}).
+				Where("parent_order_id = ? AND tenant_status != ?", subOrder.ParentOrderID, "selesai").
+				Count(&incompleteCount).Error; err != nil {
+				return err
+			}
+
+			// 3. Jika hasilnya 0 (artinya SEMUA dapur sudah selesai memasak pesanan ini)
+			if incompleteCount == 0 {
+				// Update OrderStatus di pesanan utama menjadi "selesai"
+				if err := tx.Model(&models.Order{}).
+					Where("id = ?", subOrder.ParentOrderID).
+					Update("order_status", "selesai").Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
 }
 
 // 3. Laporan Pemasukan Admin (Melihat semua orderan utama)
