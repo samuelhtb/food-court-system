@@ -12,6 +12,7 @@ type Order struct {
 	CustomerUserID *uuid.UUID `gorm:"type:uuid" json:"customer_user_id,omitempty"`
 	PaymentMethod  string     `gorm:"type:varchar(50);not null" json:"payment_method"`
 	PaymentStatus  string     `gorm:"type:varchar(50);default:'menunggu'" json:"payment_status"`
+	OrderStatus    string     `gorm:"type:varchar(50);default:'diproses'" json:"order_status"` // TAMBAHAN BARU
 	TotalAmount    float64    `gorm:"type:numeric;not null" json:"total_amount"`
 	CreatedAt      time.Time  `json:"created_at"`
 
