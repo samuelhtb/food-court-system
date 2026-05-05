@@ -8,12 +8,12 @@ import (
 )
 
 type SubOrder struct {
-	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
-	OrderID     uuid.UUID      `gorm:"type:uuid;not null" json:"order_id"`
-	TenantID    uuid.UUID      `gorm:"type:uuid;not null" json:"tenant_id"`
-	TotalAmount float64        `gorm:"type:numeric;not null" json:"total_amount"`
-	Status      string         `gorm:"type:varchar(20);default:'preparing'" json:"status"` // preparing, ready, completed
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID            uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	ParentOrderID uuid.UUID  `gorm:"type:uuid;not null" json:"parent_order_id"`
+	TenantID      uuid.UUID  `gorm:"type:uuid;not null" json:"tenant_id"`
+	TenantStatus  string     `gorm:"type:varchar(50);default:'menunggu_pembayaran'" json:"tenant_status"`
+	CreatedAt     time.Time  `json:"created_at"`
+
+	// Relasi ke OrderItems
+	OrderItems []OrderItem `gorm:"foreignKey:SubOrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 }
