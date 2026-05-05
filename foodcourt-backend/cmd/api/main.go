@@ -57,8 +57,9 @@ func main() {
 	{
 		api.POST("/register", userHandler.Register)
 		api.POST("/login", userHandler.Login)
-
 		api.POST("/orders", orderHandler.Create)
+		api.GET("/admin/orders", orderHandler.GetAllOrders)
+        api.PUT("/admin/orders/:id/pay", orderHandler.MarkOrderAsPaid)
 	}
 
 	// TAMBAHAN: Protected routes (HANYA bisa diakses DENGAN token JWT)
@@ -71,6 +72,8 @@ func main() {
 		protected.GET("/menus", menuHandler.GetAll)        // Lihat semua menu milik tenant tersebut
 		protected.PUT("/menus/:id", menuHandler.Update)    // Update menu berdasarkan ID
 		protected.DELETE("/menus/:id", menuHandler.Delete) // Hapus menu berdasarkan ID
+		protected.GET("/tenant/orders", orderHandler.GetTenantOrders)
+        protected.PUT("/tenant/orders/:id/status", orderHandler.UpdateTenantOrderStatus)
 	}
 
 	// port configuration
