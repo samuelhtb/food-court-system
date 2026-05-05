@@ -11,6 +11,10 @@ import (
 
 type OrderService interface {
 	CreateOrder(req dto.CreateOrderRequest) error
+	GetTenantOrders(tenantID uuid.UUID) ([]models.SubOrder, error)
+	UpdateTenantOrderStatus(subOrderID, tenantID uuid.UUID, req dto.UpdateSubOrderStatusRequest) error
+	GetAllOrders() ([]models.Order, error)
+	MarkOrderAsPaid(orderID uuid.UUID) error
 }
 
 type orderService struct {
@@ -88,4 +92,26 @@ func (s *orderService) CreateOrder(req dto.CreateOrderRequest) error {
 	}
 
 	return s.orderRepo.CreateOrderTransaction(&newOrder, menusToUpdate)
+}
+
+func (s *orderService) GetTenantOrders(tenantID uuid.UUID) ([]models.SubOrder, error) {
+	return s.orderRepo.GetSubOrdersByTenantID(tenantID)
+}
+
+func (s *orderService) UpdateTenantOrderStatus(subOrderID, tenantID uuid.UUID, req dto.UpdateSubOrderStatusRequest) error {
+	err := s.orderRepo.UpdateSubOrderStatus(subOrderID, tenantID, req.Status)
+	if err != nil {
+		return errors.New("gagal memperbarui status pesanan: pesanan tidak ditemukan atau akses ditolak")
+	}
+	return nil
+}
+
+func (s *orderService) GetAllOrders() ([]models.Order, error) {
+	return s.orderRepo.GetAllOrders()
+}
+
+func (s *orderService) MarkOrderAsPaid(orderID uuid.UUID) error {
+	// (Opsional: Di masa depan kamu bisa tambahkan validasi di sini untuk 
+	// mengecek apakah order tersebut benar-benar menggunakan metode 'cash')
+	return s.orderRepo.MarkOrderAsPaid(orderID)
 }
