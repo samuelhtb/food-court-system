@@ -61,6 +61,8 @@ func main() {
         // Pelanggan bisa melihat menu dan membuat pesanan tanpa perlu login (opsional, sesuaikan bisnis)
         api.GET("/menus", menuHandler.GetAll)
         api.POST("/orders", orderHandler.Create) 
+
+		api.GET("/orders/:id", orderHandler.GetOrderDetails)
     }
 
     protected := r.Group("/api/v1")
