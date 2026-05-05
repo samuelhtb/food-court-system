@@ -13,6 +13,7 @@ type MenuRepository interface {
 	GetMenuByIDAndTenantID(id uuid.UUID, tenantID uuid.UUID) (*models.Menu, error)
 	UpdateMenu(menu *models.Menu) error
 	DeleteMenu(id uuid.UUID, tenantID uuid.UUID) error
+	GetMenuByID(id uuid.UUID) (*models.Menu, error)
 }
 
 // 2. Struct: Penyimpan koneksi database
@@ -49,4 +50,10 @@ func (r *menuRepository) UpdateMenu(menu *models.Menu) error {
 
 func (r *menuRepository) DeleteMenu(id uuid.UUID, tenantID uuid.UUID) error {
 	return r.db.Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&models.Menu{}).Error
+}
+
+func (r *menuRepository) GetMenuByID(id uuid.UUID) (*models.Menu, error) {
+	var menu models.Menu
+	err := r.db.Where("id = ?", id).First(&menu).Error
+	return &menu, err
 }
