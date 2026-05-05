@@ -53,28 +53,42 @@ func main() {
 	})
 
 	// route api tenant
-	api := r.Group("/api/v1")
-	{
-		api.POST("/register", userHandler.Register)
-		api.POST("/login", userHandler.Login)
-		api.POST("/orders", orderHandler.Create)
-		api.GET("/admin/orders", orderHandler.GetAllOrders)
-        api.PUT("/admin/orders/:id/pay", orderHandler.MarkOrderAsPaid)
-	}
+   	api := r.Group("/api/v1")
+    {
+        api.POST("/register", userHandler.Register)
+        api.POST("/login", userHandler.Login)
+        
+        // Pelanggan bisa melihat menu dan membuat pesanan tanpa perlu login (opsional, sesuaikan bisnis)
+        api.GET("/menus", menuHandler.GetAll)
+        api.POST("/orders", orderHandler.Create) 
+    }
 
-	// TAMBAHAN: Protected routes (HANYA bisa diakses DENGAN token JWT)
-	protected := r.Group("/api/v1")
-	// Pastikan AuthMiddleware kamu menerima secretKey jika desain kodemu membutuhkannya
-	// Ubah menjadi middleware.AuthMiddleware() jika tidak butuh parameter secretKey
-	protected.Use(middlewares.AuthMiddleware(secretKey)) 
-	{
-		protected.POST("/menus", menuHandler.Create)       // Create menu baru
-		protected.GET("/menus", menuHandler.GetAll)        // Lihat semua menu milik tenant tersebut
-		protected.PUT("/menus/:id", menuHandler.Update)    // Update menu berdasarkan ID
-		protected.DELETE("/menus/:id", menuHandler.Delete) // Hapus menu berdasarkan ID
-		protected.GET("/tenant/orders", orderHandler.GetTenantOrders)
-        protected.PUT("/tenant/orders/:id/status", orderHandler.UpdateTenantOrderStatus)
-	}
+    protected := r.Group("/api/v1")
+    protected.Use(middlewares.AuthMiddleware(secretKey)) 
+    {
+        // Tenant
+        tenantRoutes := protected.Group("/")
+        tenantRoutes.Use(middlewares.RoleMiddleware("tenant"))
+        {
+            // Manajemen Menu Tenant
+            tenantRoutes.POST("/menus", menuHandler.Create)       
+            tenantRoutes.PUT("/menus/:id", menuHandler.Update)    
+            tenantRoutes.DELETE("/menus/:id", menuHandler.Delete) 
+            
+            // Manajemen Pesanan & Laporan Tenant
+            tenantRoutes.GET("/tenant/orders", orderHandler.GetTenantOrders)
+            tenantRoutes.PUT("/tenant/orders/:id/status", orderHandler.UpdateTenantOrderStatus)
+            tenantRoutes.GET("/tenant/earnings", orderHandler.GetTenantEarnings)
+        }
+
+		// admin / kasir
+        adminRoutes := protected.Group("/")
+        adminRoutes.Use(middlewares.RoleMiddleware("admin"))
+        {
+            adminRoutes.GET("/admin/orders", orderHandler.GetAllOrders)
+            adminRoutes.PUT("/admin/orders/:id/pay", orderHandler.MarkOrderAsPaid)
+        }
+    }
 
 	// port configuration
 	port := os.Getenv("PORT")

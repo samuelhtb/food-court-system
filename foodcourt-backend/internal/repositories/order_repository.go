@@ -18,6 +18,8 @@ type OrderRepository interface {
 
 	MarkOrderAsPaid(orderID uuid.UUID) error
 	GetOrderByID(orderID uuid.UUID) (*models.Order, error)
+
+	GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error)
 }
 
 type orderRepository struct {
@@ -133,4 +135,29 @@ func (r *orderRepository) GetOrderByID(orderID uuid.UUID) (*models.Order, error)
 	var order models.Order
 	err := r.db.Where("id = ?", orderID).First(&order).Error
 	return &order, err
+}
+
+func (r *orderRepository) GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error) {
+	var subOrders []models.SubOrder
+	
+	// Tarik data SubOrder yang berstatus "selesai" beserta rincian itemnya
+	err := r.db.Preload("OrderItems").
+		Where("tenant_id = ? AND tenant_status = ?", tenantID, "selesai").
+		Find(&subOrders).Error
+
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var totalEarnings float64 = 0
+	var totalOrders int64 = int64(len(subOrders))
+
+	// Kalkulasi total pendapatan
+	for _, subOrder := range subOrders {
+		for _, item := range subOrder.OrderItems {
+			totalEarnings += (float64(item.Quantity) * item.PriceAtOrder)
+		}
+	}
+
+	return totalEarnings, totalOrders, nil
 }

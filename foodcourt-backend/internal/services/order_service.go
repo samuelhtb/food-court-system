@@ -15,6 +15,7 @@ type OrderService interface {
 	UpdateTenantOrderStatus(subOrderID, tenantID uuid.UUID, req dto.UpdateSubOrderStatusRequest) error
 	GetAllOrders() ([]models.Order, error)
 	MarkOrderAsPaid(orderID uuid.UUID) error
+	GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error)
 }
 
 type orderService struct {
@@ -123,4 +124,8 @@ func (s *orderService) MarkOrderAsPaid(orderID uuid.UUID) error {
 
 	// Jika cash, lanjutkan proses lunas
 	return s.orderRepo.MarkOrderAsPaid(orderID)
+}
+
+func (s *orderService) GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error) {
+	return s.orderRepo.GetTenantEarnings(tenantID)
 }
