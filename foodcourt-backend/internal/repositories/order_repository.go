@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"github.com/google/uuid"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -14,6 +15,8 @@ type OrderRepository interface {
 	
 	// Untuk Admin / Kasir
 	GetAllOrders() ([]models.Order, error)
+
+	MarkOrderAsPaid(orderID uuid.UUID) error
 }
 
 type orderRepository struct {
@@ -71,4 +74,24 @@ func (r *orderRepository) GetAllOrders() ([]models.Order, error) {
 	// Disarankan menambah Preload SubOrders agar admin bisa lihat rincian pecahannya juga
 	err := r.db.Preload("SubOrders").Find(&orders).Error
 	return orders, err
+}
+
+func (r *orderRepository) MarkOrderAsPaid(orderID uuid.UUID) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Ubah status transaksi utama jadi lunas
+		if err := tx.Model(&models.Order{}).
+			Where("id = ?", orderID).
+			Update("payment_status", "paid").Error; err != nil {
+			return err
+		}
+
+		// 2. Trigger semua dapur (SubOrder) untuk mulai memproses makanan
+		if err := tx.Model(&models.SubOrder{}).
+			Where("parent_order_id = ?", orderID).
+			Update("tenant_status", "diproses").Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
