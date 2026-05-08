@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/dto"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/services"
 )
@@ -24,16 +24,22 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.CreateOrder(req); err != nil {
+	// Get OrderID from service
+	orderID, err := h.service.CreateOrder(req)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Pesanan berhasil dibuat!"})
+	// Add order_id to JSON response
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Pesanan berhasil dibuat!",
+		"order_id": orderID,
+	})
 }
 
 func (h *OrderHandler) GetTenantOrders(c *gin.Context) {
-	// Ambil userID dari token JWT (disimpan oleh middleware)
+	// Get userID from JWT token (saved by middleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
