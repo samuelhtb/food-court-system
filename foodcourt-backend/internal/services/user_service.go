@@ -11,6 +11,7 @@ import (
 
 type UserService interface {
 	RegisterTenant(req dto.RegisterRequest) error
+	RegisterAdmin(req dto.RegisterRequest) error
 	Login(req dto.LoginRequest) (*models.User, error)
 }
 
@@ -40,6 +41,24 @@ func (s *userService) RegisterTenant(req dto.RegisterRequest) error {
 	}
 
 	// Save to DB
+	return s.repo.CreateUser(&user)
+}
+
+func (s *userService) RegisterAdmin(req dto.RegisterRequest) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	if err != nil {
+		return errors.New("gagal mengamankan password")
+	}
+
+	user := models.User{
+		Username:     req.Username,
+		Email:        req.Email,
+		Name:         req.Name,
+		TenantName:   "", // Admin doesnt have a tenant
+		PasswordHash: string(hashedPassword),
+		Role:         "admin",
+	}
+
 	return s.repo.CreateUser(&user)
 }
 

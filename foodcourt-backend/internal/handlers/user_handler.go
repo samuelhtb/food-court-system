@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,28 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Registrasi berhasil, silakan login"})
+}
+
+func (h *UserHandler) RegisterAdmin(c *gin.Context) {
+	// Pengecekan Secret Key dari Header
+	secret := c.GetHeader("X-Admin-Secret")
+	if secret != os.Getenv("ADMIN_SECRET_KEY") {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses dilarang! Secret key tidak valid."})
+		return
+	}
+
+	var req dto.RegisterRequest // Get data from request body into DTO
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "data tidak valid atau kurang lengkap"})
+		return
+	}
+
+	if err := h.userService.RegisterAdmin(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Admin berhasil dibuat"})
 }
 
 func (h *UserHandler) Login(c *gin.Context) {

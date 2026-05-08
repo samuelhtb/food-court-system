@@ -64,6 +64,7 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		api.POST("/register", userHandler.Register)
+		api.POST("/register-admin", userHandler.RegisterAdmin)
 		api.POST("/login", userHandler.Login)
 
 		// Pelanggan bisa melihat menu dan membuat pesanan tanpa perlu login (opsional, sesuaikan bisnis)
