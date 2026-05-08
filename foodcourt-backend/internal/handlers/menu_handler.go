@@ -64,6 +64,16 @@ func (h *MenuHandler) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": menus})
 }
 
+func (h *MenuHandler) GetAllPublic(c *gin.Context) {
+	menus, err := h.service.GetPublicMenus()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": menus})
+}
+
 func (h *MenuHandler) Update(c *gin.Context) {
 	tenantID, err := getTenantID(c)
 	if err != nil {

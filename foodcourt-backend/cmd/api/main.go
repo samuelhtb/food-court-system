@@ -67,7 +67,7 @@ func main() {
 		api.POST("/login", userHandler.Login)
 
 		// Pelanggan bisa melihat menu dan membuat pesanan tanpa perlu login (opsional, sesuaikan bisnis)
-		api.GET("/menus", menuHandler.GetAll)
+		api.GET("/menus", menuHandler.GetAllPublic)
 		api.POST("/orders", orderHandler.Create)
 
 		api.GET("/orders/:id", orderHandler.GetOrderDetails)
@@ -81,6 +81,7 @@ func main() {
 		tenantRoutes.Use(middlewares.RoleMiddleware("tenant"))
 		{
 			// Manajemen Menu Tenant
+			tenantRoutes.GET("/tenant/menus", menuHandler.GetAll)
 			tenantRoutes.POST("/menus", menuHandler.Create)
 			tenantRoutes.PUT("/menus/:id", menuHandler.Update)
 			tenantRoutes.DELETE("/menus/:id", menuHandler.Delete)

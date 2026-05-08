@@ -10,6 +10,7 @@ import (
 type MenuRepository interface {
 	CreateMenu(menu *models.Menu) error
 	GetMenusByTenantID(tenantID uuid.UUID) ([]models.Menu, error)
+	GetAllMenus() ([]models.Menu, error)
 	GetMenuByIDAndTenantID(id uuid.UUID, tenantID uuid.UUID) (*models.Menu, error)
 	UpdateMenu(menu *models.Menu) error
 	DeleteMenu(id uuid.UUID, tenantID uuid.UUID) error
@@ -35,6 +36,12 @@ func (r *menuRepository) CreateMenu(menu *models.Menu) error {
 func (r *menuRepository) GetMenusByTenantID(tenantID uuid.UUID) ([]models.Menu, error) {
 	var menus []models.Menu
 	err := r.db.Where("tenant_id = ?", tenantID).Find(&menus).Error
+	return menus, err
+}
+
+func (r *menuRepository) GetAllMenus() ([]models.Menu, error) {
+	var menus []models.Menu
+	err := r.db.Where("is_available = ?", true).Find(&menus).Error
 	return menus, err
 }
 
