@@ -30,7 +30,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
           items: items.map((i) => ({ menu_id: i.id, quantity: i.quantity })),
         }),
       });
-      const id = res?.id || res?.data?.id || res?.order?.id || "";
+      const id = res?.order_id || res?.id || res?.data?.id || res?.order?.id || "";
       setOrderId(id);
       clear();
       toast.success("Order placed!");
@@ -62,7 +62,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             <div className="rounded-full bg-primary/10 p-4">
               <Check className="h-10 w-10 text-burgundy" />
             </div>
-            <p className="text-muted-foreground">Save your Order ID to track status.</p>
+            <p className="text-muted-foreground">Harap simpan Order ID ini untuk melacak status pesanan Anda.</p>
             <div className="glass flex w-full items-center justify-between gap-2 rounded-xl p-4">
               <code className="truncate text-sm font-medium">{orderId}</code>
               <Button

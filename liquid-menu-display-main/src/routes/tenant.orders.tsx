@@ -37,20 +37,28 @@ function TenantOrders() {
       {!orders ? <Skeleton className="h-64 rounded-2xl" /> :
         orders.length === 0 ? <div className="glass rounded-3xl p-12 text-center text-muted-foreground">No orders yet.</div> :
         <div className="space-y-3">
-          {orders.map((o) => (
+          {orders.map((o) => {
+            const items = o.order_items || [];
+            const total = items.reduce((acc: number, curr: any) => acc + (curr.price_at_order * curr.quantity), 0);
+            const itemCount = items.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+
+            return (
             <div key={o.id} className="glass flex flex-col gap-3 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="font-semibold">{o.customer_name}</div>
-                <div className="text-xs text-muted-foreground">#{o.id?.slice(0, 8)} · {formatRupiah(o.total_price || o.total || 0)}</div>
+                <div className="font-semibold">Sub-Order #{o.id?.slice(0, 8)}</div>
+                <div className="text-xs text-muted-foreground">
+                   {itemCount} items · {formatRupiah(total)}
+                </div>
               </div>
-              <Select defaultValue={o.status} onValueChange={(v) => updateStatus(o.id, v)}>
+              <Select defaultValue={o.tenant_status || o.status} onValueChange={(v) => updateStatus(o.id, v)}>
                 <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-          ))}
+            );
+          })}
         </div>
       }
     </DashboardShell>
