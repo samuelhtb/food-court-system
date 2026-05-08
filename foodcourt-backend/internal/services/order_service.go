@@ -10,7 +10,7 @@ import (
 )
 
 type OrderService interface {
-	CreateOrder(req dto.CreateOrderRequest) error
+	CreateOrder(req dto.CreateOrderRequest) (uuid.UUID, error)
 	GetTenantOrders(tenantID uuid.UUID) ([]models.SubOrder, error)
 	UpdateTenantOrderStatus(subOrderID, tenantID uuid.UUID, req dto.UpdateSubOrderStatusRequest) error
 	GetAllOrders() ([]models.Order, error)
@@ -28,7 +28,7 @@ func NewOrderService(orderRepo repositories.OrderRepository, menuRepo repositori
 	return &orderService{orderRepo, menuRepo}
 }
 
-func (s *orderService) CreateOrder(req dto.CreateOrderRequest) error {
+func (s *orderService) CreateOrder(req dto.CreateOrderRequest) (uuid.UUID, error) {
 	var totalOrderAmount float64
 	var menusToUpdate []models.Menu
 
@@ -38,11 +38,12 @@ func (s *orderService) CreateOrder(req dto.CreateOrderRequest) error {
 	for _, itemReq := range req.Items {
 		menu, err := s.menuRepo.GetMenuByID(itemReq.MenuID)
 		if err != nil {
-			return errors.New("menu tidak ditemukan")
+			// Jika error, return uuid.Nil sebagai penanda kosong
+			return uuid.Nil, errors.New("menu tidak ditemukan")
 		}
 
 		if !menu.IsAvailable || menu.Stock < itemReq.Quantity {
-			return errors.New("stok tidak cukup untuk menu: " + menu.Name)
+			return uuid.Nil, errors.New("stok tidak cukup untuk menu: " + menu.Name)
 		}
 
 		// Kurangi stok di memori (akan di-commit saat transaksi DB)
@@ -93,7 +94,13 @@ func (s *orderService) CreateOrder(req dto.CreateOrderRequest) error {
 		SubOrders:      subOrdersList,
 	}
 
-	return s.orderRepo.CreateOrderTransaction(&newOrder, menusToUpdate)
+	// Add order_id to JSON response
+	err := s.orderRepo.CreateOrderTransaction(&newOrder, menusToUpdate)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return newOrder.ID, nil
 }
 
 func (s *orderService) GetTenantOrders(tenantID uuid.UUID) ([]models.SubOrder, error) {
