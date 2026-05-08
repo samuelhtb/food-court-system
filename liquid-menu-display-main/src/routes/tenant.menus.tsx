@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const NAV = [
   { to: "/tenant/menus", label: "Menus", icon: <UtensilsCrossed className="h-4 w-4" /> },
@@ -30,30 +31,59 @@ function TenantMenus() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Menu | null>(null);
   const [form, setForm] = useState<FormData>(empty);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const load = () => api<any>("/tenant/menus").then((d) => setMenus(d.data || d.menus || d)).catch((e) => toast.error(e.message));
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(empty); setImageFile(null); setOpen(true); };
   const openEdit = (m: Menu) => {
     setEditing(m);
     setForm({ name: m.name, description: m.description || "", price: m.price, stock: m.stock, image_url: m.image_url || "", is_available: m.is_available ?? true });
+    setImageFile(null);
     setOpen(true);
   };
 
   const save = async () => {
+    setIsUploading(true);
     try {
+      let finalImageUrl = form.image_url;
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('menu-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('menu-images')
+          .getPublicUrl(fileName);
+
+        finalImageUrl = publicUrl;
+      }
+
+      const payload = { ...form, image_url: finalImageUrl };
+
       if (editing) {
-        await api(`/menus/${editing.id}`, { method: "PUT", body: JSON.stringify(form) });
+        await api(`/menus/${editing.id}`, { method: "PUT", body: JSON.stringify(payload) });
         toast.success("Menu updated");
       } else {
-        const { is_available, ...payload } = form;
-        await api(`/menus`, { method: "POST", body: JSON.stringify(payload) });
+        const { is_available, ...createPayload } = payload;
+        await api(`/menus`, { method: "POST", body: JSON.stringify(createPayload) });
         toast.success("Menu created");
       }
       setOpen(false);
+      setImageFile(null);
       load();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { 
+      toast.error(e.message); 
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const del = async (id: string) => {
@@ -82,7 +112,11 @@ function TenantMenus() {
                 <div><Label>Price</Label><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} /></div>
                 <div><Label>Stock</Label><Input type="number" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: +e.target.value })} /></div>
               </div>
-              <div><Label>Image URL</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} /></div>
+              <div>
+                <Label>Image (Optional)</Label>
+                <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+                {form.image_url && !imageFile && <p className="mt-1 text-xs text-muted-foreground">Current image will be kept.</p>}
+              </div>
               {editing && (
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
@@ -90,7 +124,7 @@ function TenantMenus() {
                 </label>
               )}
             </div>
-            <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
+            <DialogFooter><Button onClick={save} disabled={isUploading}>{isUploading ? "Uploading..." : "Save"}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
