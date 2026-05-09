@@ -1,3 +1,5 @@
+import { useAuth } from "@/stores/auth";
+
 export const API_BASE = "http://localhost:8080/api/v1";
 
 function getToken() {
@@ -18,6 +20,14 @@ export async function api<T = any>(
     headers.Authorization = `Bearer ${token}`;
   }
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  if (res.status === 401 && options.auth !== false) {
+    useAuth.getState().logout();
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+  }
+
   if (!res.ok) {
     let msg = `Request failed: ${res.status}`;
     try {

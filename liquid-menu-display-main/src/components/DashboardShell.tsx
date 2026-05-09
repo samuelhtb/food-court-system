@@ -22,11 +22,12 @@ export function DashboardShell({
   const loc = useLocation();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !auth._hasHydrated) return;
+    
     if (!auth.token || auth.role !== role) {
       navigate({ to: "/login" });
     }
-  }, [auth.token, auth.role, role, navigate]);
+  }, [auth.token, auth.role, role, navigate, auth._hasHydrated]);
 
   return (
     <div className="flex min-h-screen">
