@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/DashboardShell";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Eye } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatRupiah } from "@/stores/cart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const NAV = [
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/admin/orders")({
 
 function AdminOrders() {
   const [orders, setOrders] = useState<any[] | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const load = () => api<any>("/admin/orders").then((d) => setOrders(d.data || d.orders || d)).catch((e) => toast.error(e.message));
   useEffect(() => { load(); }, []);
 
@@ -48,14 +50,17 @@ function AdminOrders() {
                 return (
                   <tr key={o.id} className="border-t">
                     <td className="p-4 font-medium">{o.customer_name}</td>
-                    <td className="p-4">{formatRupiah(o.total_price || o.total || 0)}</td>
+                    <td className="p-4">{formatRupiah(o.total_amount || 0)}</td>
                     <td className="p-4 capitalize">{o.payment_method}</td>
                     <td className="p-4">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${paid ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
                         {paid ? "Paid" : "Pending"}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right flex justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedOrder(o)}>
+                        <Eye className="h-4 w-4 mr-1" /> Details
+                      </Button>
                       {!paid && o.payment_method === "cash" && (
                         <Button size="sm" onClick={() => markPaid(o.id)}>Mark Paid</Button>
                       )}
@@ -67,6 +72,43 @@ function AdminOrders() {
           </table>
         </div>
       }
+
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-md data-[state=open]:zoom-in-100 data-[state=open]:slide-in-from-top-[50%] data-[state=open]:slide-in-from-left-[50%]">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between border-b pb-2">
+                <span className="font-medium">Order ID:</span>
+                <code className="text-xs bg-muted px-1 rounded">{selectedOrder.id}</code>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="font-medium">Customer:</span>
+                <span>{selectedOrder.customer_name}</span>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Items:</h4>
+                <ul className="space-y-2">
+                  {(selectedOrder.sub_orders || []).map((so: any) => 
+                    (so.order_items || []).map((item: any) => (
+                      <li key={item.id} className="flex justify-between text-muted-foreground">
+                        <span>{item.quantity}x {item.menu?.name || "Unknown Menu"}</span>
+                        <span>{formatRupiah(item.price_at_order * item.quantity)}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+              <div className="flex justify-between border-t pt-2 font-bold text-base">
+                <span>Total</span>
+                <span className="text-burgundy">{formatRupiah(selectedOrder.total_amount || 0)}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }

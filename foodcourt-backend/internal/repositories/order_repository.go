@@ -109,7 +109,7 @@ func (r *orderRepository) UpdateSubOrderStatus(subOrderID, tenantID uuid.UUID, s
 func (r *orderRepository) GetAllOrders() ([]models.Order, error) {
 	var orders []models.Order
 	// Disarankan menambah Preload SubOrders agar admin bisa lihat rincian pecahannya juga
-	err := r.db.Preload("SubOrders").Find(&orders).Error
+	err := r.db.Preload("SubOrders.OrderItems.Menu").Order("created_at desc").Find(&orders).Error
 	return orders, err
 }
 
