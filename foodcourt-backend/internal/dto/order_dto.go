@@ -15,5 +15,5 @@ type CreateOrderRequest struct {
 }
 
 type UpdateSubOrderStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=diproses dimasak siap_diambil selesai"`
+	Status string `json:"status" binding:"required,oneof=menunggu_pembayaran diproses selesai"`
 }

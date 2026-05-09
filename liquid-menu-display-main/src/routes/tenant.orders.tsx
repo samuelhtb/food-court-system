@@ -14,7 +14,7 @@ const NAV = [
   { to: "/tenant/earnings", label: "Earnings", icon: <Wallet className="h-4 w-4" /> },
 ];
 
-const STATUSES = ["diproses", "dimasak", "siap_diambil", "selesai"];
+const STATUSES = ["menunggu_pembayaran", "diproses", "selesai"];
 
 export const Route = createFileRoute("/tenant/orders")({
   component: TenantOrders,

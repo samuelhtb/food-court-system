@@ -54,7 +54,11 @@ func (r *orderRepository) CreateOrderTransaction(order *models.Order, menusToUpd
 func (r *orderRepository) GetSubOrdersByTenantID(tenantID uuid.UUID) ([]models.SubOrder, error) {
 	var subOrders []models.SubOrder
 	// Preload wajib agar Tenant tahu harus masak apa
-	err := r.db.Preload("OrderItems").Where("tenant_id = ?", tenantID).Find(&subOrders).Error
+	// Hanya tampilkan jika status pembayaran di tabel utama sudah "paid"
+	err := r.db.Preload("OrderItems").
+		Joins("JOIN orders ON orders.id = sub_orders.parent_order_id").
+		Where("sub_orders.tenant_id = ? AND orders.payment_status = ?", tenantID, "paid").
+		Find(&subOrders).Error
 	return subOrders, err
 }
 
