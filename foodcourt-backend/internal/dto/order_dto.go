@@ -17,3 +17,19 @@ type CreateOrderRequest struct {
 type UpdateSubOrderStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=menunggu_pembayaran diproses selesai"`
 }
+
+type TrackOrderItemResponse struct {
+	MenuName string  `json:"name"`
+	Quantity int     `json:"quantity"`
+	Price    float64 `json:"price"`
+}
+
+type TrackOrderResponse struct {
+	ID            uuid.UUID                `json:"id"`
+	CustomerName  string                   `json:"customer_name"`
+	PaymentMethod string                   `json:"payment_method"`
+	PaymentStatus string                   `json:"payment_status"`
+	OrderStatus   string                   `json:"order_status"`
+	TotalAmount   float64                  `json:"total_amount"`
+	Items         []TrackOrderItemResponse `json:"items"`
+}

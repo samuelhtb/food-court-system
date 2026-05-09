@@ -56,14 +56,14 @@ function TrackOrder() {
                 <div className="font-semibold">{order.customer_name}</div>
               </div>
               <span className="rounded-full bg-burgundy px-3 py-1 text-xs font-bold uppercase text-burgundy-foreground">
-                {order.status || order.payment_status || "pending"}
+                {order.order_status || order.payment_status || "pending"}
               </span>
             </div>
             <div className="mt-4 space-y-2">
               {(order.items || []).map((it: any, i: number) => (
                 <div key={i} className="flex justify-between text-sm">
-                  <span>{it.menu?.name || it.name} × {it.quantity}</span>
-                  <span>{formatRupiah((it.price || it.menu?.price || 0) * it.quantity)}</span>
+                  <span>{it.name} × {it.quantity}</span>
+                  <span>{formatRupiah(it.price * it.quantity)}</span>
                 </div>
               ))}
             </div>

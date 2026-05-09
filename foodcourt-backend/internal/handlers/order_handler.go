@@ -153,8 +153,30 @@ func (h *OrderHandler) GetOrderDetails(c *gin.Context) {
 		return
 	}
 
+	// Transformasi ke DTO untuk meratakan rincian item (flattening)
+	var items []dto.TrackOrderItemResponse
+	for _, so := range order.SubOrders {
+		for _, it := range so.OrderItems {
+			items = append(items, dto.TrackOrderItemResponse{
+				MenuName: it.Menu.Name,
+				Quantity: it.Quantity,
+				Price:    it.PriceAtOrder,
+			})
+		}
+	}
+
+	response := dto.TrackOrderResponse{
+		ID:            order.ID,
+		CustomerName:  order.CustomerName,
+		PaymentMethod: order.PaymentMethod,
+		PaymentStatus: order.PaymentStatus,
+		OrderStatus:   order.OrderStatus,
+		TotalAmount:   order.TotalAmount,
+		Items:         items,
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Detail pesanan berhasil diambil",
-		"data":    order,
+		"data":    response,
 	})
 }

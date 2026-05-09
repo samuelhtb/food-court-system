@@ -172,7 +172,7 @@ func (r *orderRepository) GetOrderWithDetails(orderID uuid.UUID) (*models.Order,
 	var order models.Order
 	
 	// Preload bertingkat: Ambil SubOrders sekaligus OrderItems di dalamnya
-	err := r.db.Preload("SubOrders.OrderItems").Where("id = ?", orderID).First(&order).Error
+	err := r.db.Preload("SubOrders.OrderItems.Menu").Where("id = ?", orderID).First(&order).Error
 	
 	if err != nil {
 		return nil, err
