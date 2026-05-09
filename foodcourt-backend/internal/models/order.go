@@ -14,6 +14,8 @@ type Order struct {
 	PaymentStatus  string     `gorm:"type:varchar(50);default:'menunggu'" json:"payment_status"`
 	OrderStatus    string     `gorm:"type:varchar(50);default:'diproses'" json:"order_status"` // TAMBAHAN BARU
 	TotalAmount    float64    `gorm:"type:numeric;not null" json:"total_amount"`
+	MidtransToken  string     `gorm:"type:varchar(255)" json:"midtrans_token,omitempty"`
+	MidtransOrderID string    `gorm:"type:varchar(255)" json:"midtrans_order_id,omitempty"`
 	CreatedAt      time.Time  `json:"created_at"`
 
 	SubOrders []SubOrder `gorm:"foreignKey:ParentOrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"sub_orders,omitempty"`

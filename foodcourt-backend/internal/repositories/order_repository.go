@@ -22,6 +22,9 @@ type OrderRepository interface {
 	GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error)
 
 	GetOrderWithDetails(orderID uuid.UUID) (*models.Order, error)
+	FindByMidtransOrderID(midtransOrderID string) (*models.Order, error)
+	UpdateMidtransInfo(orderID uuid.UUID, token, midtransOrderID string) error
+	UpdatePaymentStatus(orderID uuid.UUID, status string) error
 }
 
 type orderRepository struct {
@@ -178,4 +181,39 @@ func (r *orderRepository) GetOrderWithDetails(orderID uuid.UUID) (*models.Order,
 		return nil, err
 	}
 	return &order, nil
+}
+
+func (r *orderRepository) FindByMidtransOrderID(midtransOrderID string) (*models.Order, error) {
+	var order models.Order
+	err := r.db.Where("midtrans_order_id = ?", midtransOrderID).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func (r *orderRepository) UpdateMidtransInfo(orderID uuid.UUID, token, midtransOrderID string) error {
+	return r.db.Model(&models.Order{}).Where("id = ?", orderID).Updates(map[string]interface{}{
+		"midtrans_token":    token,
+		"midtrans_order_id": midtransOrderID,
+	}).Error
+}
+
+func (r *orderRepository) UpdatePaymentStatus(orderID uuid.UUID, status string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&models.Order{}).Where("id = ?", orderID).Update("payment_status", status).Error; err != nil {
+			return err
+		}
+
+		if status == "paid" {
+			// Trigger semua dapur (SubOrder) untuk mulai memproses makanan
+			if err := tx.Model(&models.SubOrder{}).
+				Where("parent_order_id = ?", orderID).
+				Update("tenant_status", "diproses").Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

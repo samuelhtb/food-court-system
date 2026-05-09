@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Minus, Plus, Trash2, ShoppingBag, Copy, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import MidtransPayment from "./MidtransPayment";
 
 export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, clear } = useCart();
@@ -17,6 +18,9 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [midtransToken, setMidtransToken] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [tempOrderId, setTempOrderId] = useState<string | null>(null);
 
   const submit = async () => {
     if (!name.trim()) return toast.error("Please enter your name");
@@ -31,9 +35,16 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
         }),
       });
       const id = res?.order_id || res?.id || res?.data?.id || res?.order?.id || "";
-      setOrderId(id);
-      clear();
-      toast.success("Order placed!");
+      
+      if (res?.midtrans_token) {
+        setMidtransToken(res.midtrans_token);
+        setTempOrderId(id);
+      } else {
+        setOrderId(id);
+        setShowSuccess(true);
+        clear();
+        toast.success("Order placed!");
+      }
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -46,6 +57,9 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
     setOrderId(null);
     setName("");
     setMethod("cash");
+    setMidtransToken(null);
+    setShowSuccess(false);
+    setTempOrderId(null);
   };
 
   return (
@@ -53,11 +67,11 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
       <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="font-display text-2xl">
-            {orderId ? "Order Confirmed" : checkout ? "Checkout" : "Your Cart"}
+            {showSuccess ? "Order Confirmed" : checkout ? "Checkout" : "Your Cart"}
           </SheetTitle>
         </SheetHeader>
 
-        {orderId ? (
+        {showSuccess ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
             <div className="rounded-full bg-primary/10 p-4">
               <Check className="h-10 w-10 text-burgundy" />
@@ -68,7 +82,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => { navigator.clipboard.writeText(orderId); setCopied(true); toast.success("Copied"); }}
+                onClick={() => { if (orderId) { navigator.clipboard.writeText(orderId); setCopied(true); toast.success("Copied"); } }}
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -157,6 +171,24 @@ export function CartSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
           </>
         )}
       </SheetContent>
+
+      {midtransToken && tempOrderId && (
+        <MidtransPayment
+          token={midtransToken}
+          orderId={tempOrderId}
+          onSuccess={() => {
+            setOrderId(tempOrderId);
+            setShowSuccess(true);
+            setMidtransToken(null);
+            clear();
+            toast.success("Pembayaran Berhasil!");
+          }}
+          onClose={() => {
+            setMidtransToken(null);
+            setLoading(false);
+          }}
+        />
+      )}
     </Sheet>
   );
 }

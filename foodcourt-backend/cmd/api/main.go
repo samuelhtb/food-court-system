@@ -11,6 +11,7 @@ import (
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/config"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/handlers"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/middlewares"
+	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/models"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/repositories"
 	"github.com/samuelhtb/food-court-system/foodcourt-backend/internal/services"
 )
@@ -29,6 +30,12 @@ func main() {
 	// db connection
 	db := config.ConnectDB()
 
+	// migration
+	err = db.AutoMigrate(&models.User{}, &models.Menu{}, &models.Order{}, &models.SubOrder{}, &models.OrderItem{})
+	if err != nil {
+		log.Fatalf("Gagal melakukan migrasi: %v", err)
+	}
+
 	// dependency injection
 	userRepo := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepo)
@@ -42,7 +49,13 @@ func main() {
 	// TAMBAHAN: Dependency injection untuk Order
 	orderRepo := repositories.NewOrderRepository(db)
 	orderService := services.NewOrderService(orderRepo, menuRepo)
-	orderHandler := handlers.NewOrderHandler(orderService)
+
+	// TAMBAHAN: Midtrans
+	midtransCfg := config.LoadMidtransConfig()
+	midtransService := services.NewMidtransService(orderRepo, midtransCfg)
+	midtransHandler := handlers.NewMidtransHandler(midtransService)
+
+	orderHandler := handlers.NewOrderHandler(orderService, midtransService)
 
 	r := gin.Default()
 
@@ -72,6 +85,10 @@ func main() {
 		api.POST("/orders", orderHandler.Create)
 
 		api.GET("/orders/:id", orderHandler.GetOrderDetails)
+
+		// Midtrans Webhooks & Verification
+		api.POST("/midtrans/notification", midtransHandler.HandleNotification)
+		api.POST("/midtrans/verify", midtransHandler.VerifyLocalPayment)
 	}
 
 	protected := r.Group("/api/v1")

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,11 +11,12 @@ import (
 )
 
 type OrderHandler struct {
-	service services.OrderService
+	service         services.OrderService
+	midtransService services.MidtransService
 }
 
-func NewOrderHandler(service services.OrderService) *OrderHandler {
-	return &OrderHandler{service}
+func NewOrderHandler(service services.OrderService, midtransService services.MidtransService) *OrderHandler {
+	return &OrderHandler{service, midtransService}
 }
 
 func (h *OrderHandler) Create(c *gin.Context) {
@@ -32,9 +34,25 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 
 	// Add order_id to JSON response
-	c.JSON(http.StatusCreated, gin.H{
-		"message":  "Pesanan berhasil dibuat!",
-		"order_id": orderID,
+	var midtransToken string
+	if req.PaymentMethod == "qris" {
+		order, err := h.service.GetOrderWithDetails(orderID)
+		if err != nil {
+			log.Printf("Gagal mengambil detail pesanan untuk Midtrans: %v", err)
+		} else {
+			token, err := h.midtransService.CreateSnapTransaction(order)
+			if err != nil {
+				log.Printf("Gagal membuat transaksi Midtrans: %v", err)
+			} else {
+				midtransToken = token
+			}
+		}
+	}
+
+	c.JSON(http.StatusCreated, dto.CreateOrderResponse{
+		Message:       "Pesanan berhasil dibuat!",
+		OrderID:       orderID,
+		MidtransToken: midtransToken,
 	})
 }
 

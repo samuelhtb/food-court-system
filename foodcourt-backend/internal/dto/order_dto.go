@@ -14,6 +14,13 @@ type CreateOrderRequest struct {
 	Items          []OrderItemRequest `json:"items" binding:"required,min=1,dive"`
 }
 
+type CreateOrderResponse struct {
+	Message       string    `json:"message"`
+	OrderID       uuid.UUID `json:"order_id"`
+	MidtransToken string    `json:"midtrans_token,omitempty"`
+}
+
+
 type UpdateSubOrderStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=menunggu_pembayaran diproses selesai"`
 }
