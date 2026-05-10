@@ -14,6 +14,7 @@ type UserService interface {
 	RegisterAdmin(req dto.RegisterRequest) error
 	Login(req dto.LoginRequest) (*models.User, error)
 	GetTenants() ([]models.User, error)
+	GetAdmins() ([]models.User, error)
 }
 
 type userService struct {
@@ -80,4 +81,8 @@ func (s *userService) Login(req dto.LoginRequest) (*models.User, error) {
 
 func (s *userService) GetTenants() ([]models.User, error) {
 	return s.repo.GetUsersByRole("tenant")
+}
+
+func (s *userService) GetAdmins() ([]models.User, error) {
+	return s.repo.GetUsersByRole("admin")
 }

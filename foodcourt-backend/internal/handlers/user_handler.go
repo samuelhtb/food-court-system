@@ -37,10 +37,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 }
 
 func (h *UserHandler) RegisterAdmin(c *gin.Context) {
-	// Pengecekan Secret Key dari Header
+	// Jika sudah login sebagai admin (lewat middleware), bypass pengecekan secret key header
+	userRole, _ := c.Get("role")
 	secret := c.GetHeader("X-Admin-Secret")
-	if secret != os.Getenv("ADMIN_SECRET_KEY") {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses dilarang! Secret key tidak valid."})
+
+	if userRole != "admin" && secret != os.Getenv("ADMIN_SECRET_KEY") {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses dilarang! Memerlukan role admin atau secret key valid."})
 		return
 	}
 
@@ -109,6 +111,27 @@ func (h *UserHandler) GetTenants(c *gin.Context) {
 			Name:       t.Name,
 			Role:       t.Role,
 			TenantName: t.TenantName,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response})
+}
+
+func (h *UserHandler) GetAdmins(c *gin.Context) {
+	admins, err := h.userService.GetAdmins()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var response []dto.UserResponse
+	for _, a := range admins {
+		response = append(response, dto.UserResponse{
+			ID:       a.ID,
+			Username: a.Username,
+			Email:    a.Email,
+			Name:     a.Name,
+			Role:     a.Role,
 		})
 	}
 

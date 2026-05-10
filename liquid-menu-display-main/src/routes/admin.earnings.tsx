@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/DashboardShell";
-import { ClipboardList, Users, Wallet, TrendingUp, Receipt, Filter, Loader2 } from "lucide-react";
+import { ClipboardList, Users, Wallet, TrendingUp, Receipt, Filter, Loader2, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatRupiah } from "@/stores/cart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ const NAV = [
   { to: "/admin/orders", label: "All Orders", icon: <ClipboardList className="h-4 w-4" /> },
   { to: "/admin/tenants", label: "Tenants", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/earnings", label: "Earnings", icon: <Wallet className="h-4 w-4" /> },
+  { to: "/admin/manage-admins", label: "Manage Admins", icon: <ShieldCheck className="h-4 w-4" /> },
 ];
 
 export const Route = createFileRoute("/admin/earnings")({

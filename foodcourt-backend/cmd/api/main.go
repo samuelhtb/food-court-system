@@ -77,7 +77,6 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		api.POST("/register", userHandler.Register)
-		api.POST("/register-admin", userHandler.RegisterAdmin)
 		api.POST("/login", userHandler.Login)
 
 		// Pelanggan bisa melihat menu dan membuat pesanan tanpa perlu login (opsional, sesuaikan bisnis)
@@ -121,6 +120,10 @@ func main() {
 			// Manajemen Tenant oleh Admin
 			adminRoutes.GET("/admin/tenants", userHandler.GetTenants)
 			adminRoutes.POST("/admin/tenants", userHandler.Register)
+
+			// Manajemen Admin (Hanya bisa dilakukan oleh Admin yang sudah login)
+			adminRoutes.GET("/admin/manage", userHandler.GetAdmins)
+			adminRoutes.POST("/admin/manage", userHandler.RegisterAdmin)
 
 			// Laporan Admin
 			adminRoutes.GET("/admin/reports/income", orderHandler.GetAdminIncomeReport)
