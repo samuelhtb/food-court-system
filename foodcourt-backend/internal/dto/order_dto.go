@@ -40,3 +40,31 @@ type TrackOrderResponse struct {
 	TotalAmount   float64                  `json:"total_amount"`
 	Items         []TrackOrderItemResponse `json:"items"`
 }
+
+// Laporan Pemasukan (Income Reports)
+
+type TenantIncomeBreakdown struct {
+	TenantID    string  `json:"tenant_id"`
+	TenantName  string  `json:"tenant_name"`
+	Revenue     float64 `json:"revenue"`
+	TotalOrders int64   `json:"total_orders"`
+}
+
+type AdminIncomeReportResponse struct {
+	TotalRevenue float64                 `json:"total_revenue"`
+	TotalOrders  int64                   `json:"total_orders"`
+	Breakdown    []TenantIncomeBreakdown `json:"breakdown"`
+}
+
+type MenuIncomeBreakdown struct {
+	MenuID       string  `json:"menu_id"`
+	MenuName     string  `json:"menu_name"`
+	QuantitySold int     `json:"quantity_sold"`
+	Revenue      float64 `json:"revenue"`
+}
+
+type TenantIncomeReportResponse struct {
+	TotalRevenue float64               `json:"total_revenue"`
+	TotalOrders  int64                 `json:"total_orders"`
+	Items        []MenuIncomeBreakdown `json:"items"`
+}

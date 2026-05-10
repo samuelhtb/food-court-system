@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/DashboardShell";
-import { UtensilsCrossed, ClipboardList, Wallet, TrendingUp, Receipt, Filter, Loader2 } from "lucide-react";
+import { ClipboardList, Users, Wallet, TrendingUp, Receipt, Filter, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatRupiah } from "@/stores/cart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,16 +10,16 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const NAV = [
-  { to: "/tenant/menus", label: "Menus", icon: <UtensilsCrossed className="h-4 w-4" /> },
-  { to: "/tenant/orders", label: "Orders", icon: <ClipboardList className="h-4 w-4" /> },
-  { to: "/tenant/earnings", label: "Earnings", icon: <Wallet className="h-4 w-4" /> },
+  { to: "/admin/orders", label: "All Orders", icon: <ClipboardList className="h-4 w-4" /> },
+  { to: "/admin/tenants", label: "Tenants", icon: <Users className="h-4 w-4" /> },
+  { to: "/admin/earnings", label: "Earnings", icon: <Wallet className="h-4 w-4" /> },
 ];
 
-export const Route = createFileRoute("/tenant/earnings")({
-  component: Earnings,
+export const Route = createFileRoute("/admin/earnings")({
+  component: AdminEarnings,
 });
 
-function Earnings() {
+function AdminEarnings() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [dates, setDates] = useState({ start: "", end: "" });
@@ -27,7 +27,7 @@ function Earnings() {
   const fetchReport = async () => {
     setLoading(true);
     try {
-      let url = "/tenant/reports/income";
+      let url = "/admin/reports/income";
       const params = new URLSearchParams();
       if (dates.start) params.append("start_date", dates.start);
       if (dates.end) params.append("end_date", dates.end);
@@ -45,14 +45,14 @@ function Earnings() {
   useEffect(() => {
     fetchReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Initial load without dates
+  }, []);
 
   return (
-    <DashboardShell title="Tenant" role="tenant" nav={NAV}>
+    <DashboardShell title="Admin" role="admin" nav={NAV}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Laporan Pemasukan</h1>
-          <p className="text-sm text-muted-foreground">Monitor pendapatan stand Anda.</p>
+          <h1 className="font-display text-3xl font-bold">Laporan Pemasukan Sistem</h1>
+          <p className="text-sm text-muted-foreground">Monitor total pendapatan seluruh tenant.</p>
         </div>
         
         <div className="flex items-end gap-3 glass-strong p-3 rounded-2xl">
@@ -85,27 +85,27 @@ function Earnings() {
       ) : (
         <div className="space-y-8">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Stat icon={<TrendingUp />} label="Total Pendapatan" value={formatRupiah(data?.total_revenue || 0)} />
-            <Stat icon={<Receipt />} label="Total Pesanan" value={String(data?.total_orders || 0)} />
+            <Stat icon={<TrendingUp />} label="Total Pendapatan Sistem" value={formatRupiah(data?.total_revenue || 0)} />
+            <Stat icon={<Receipt />} label="Total Transaksi Sistem" value={String(data?.total_orders || 0)} />
           </div>
 
-          {data?.items && data.items.length > 0 && (
+          {data?.breakdown && data.breakdown.length > 0 && (
             <div className="glass-strong rounded-3xl p-8">
-              <h2 className="mb-6 font-display text-2xl font-bold">Rincian Menu</h2>
+              <h2 className="mb-6 font-display text-2xl font-bold">Rincian Per Tenant</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="text-muted-foreground">
                     <tr>
-                      <th className="pb-4 font-medium">Nama Menu</th>
-                      <th className="pb-4 font-medium text-right">Terjual</th>
-                      <th className="pb-4 font-medium text-right">Pendapatan</th>
+                      <th className="pb-4 font-medium">Nama Tenant</th>
+                      <th className="pb-4 font-medium text-right">Total Pesanan</th>
+                      <th className="pb-4 font-medium text-right">Total Pendapatan</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {data.items.map((item: any) => (
-                      <tr key={item.menu_id}>
-                        <td className="py-4 font-medium">{item.menu_name}</td>
-                        <td className="py-4 text-right">{item.quantity_sold}</td>
+                    {data.breakdown.map((item: any) => (
+                      <tr key={item.tenant_id}>
+                        <td className="py-4 font-medium">{item.tenant_name}</td>
+                        <td className="py-4 text-right">{item.total_orders}</td>
                         <td className="py-4 text-right font-medium">{formatRupiah(item.revenue)}</td>
                       </tr>
                     ))}

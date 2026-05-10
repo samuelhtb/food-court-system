@@ -25,6 +25,10 @@ type OrderRepository interface {
 	FindByMidtransOrderID(midtransOrderID string) (*models.Order, error)
 	UpdateMidtransInfo(orderID uuid.UUID, token, midtransOrderID string) error
 	UpdatePaymentStatus(orderID uuid.UUID, status string) error
+
+	// Reports
+	GetAdminIncomeReport(startDate, endDate string) (float64, int64, []models.SubOrder, []models.User, error)
+	GetTenantIncomeReport(tenantID uuid.UUID, startDate, endDate string) ([]models.SubOrder, error)
 }
 
 type orderRepository struct {
@@ -217,4 +221,66 @@ func (r *orderRepository) UpdatePaymentStatus(orderID uuid.UUID, status string) 
 
 		return nil
 	})
+}
+
+// Reports
+
+func (r *orderRepository) GetAdminIncomeReport(startDate, endDate string) (float64, int64, []models.SubOrder, []models.User, error) {
+	// First, get total revenue and total orders
+	var orders []models.Order
+	query := r.db.Where("payment_status = ?", "paid")
+
+	if startDate != "" && endDate != "" {
+		// Filter by created_at range. We need to parse or assume format YYYY-MM-DD
+		query = query.Where("created_at >= ? AND created_at <= ?", startDate+" 00:00:00", endDate+" 23:59:59")
+	}
+
+	err := query.Find(&orders).Error
+	if err != nil {
+		return 0, 0, nil, nil, err
+	}
+
+	var totalRevenue float64
+	var totalOrders int64 = int64(len(orders))
+	for _, o := range orders {
+		totalRevenue += o.TotalAmount
+	}
+
+	// Next, get breakdown per tenant via SubOrders
+	var subOrders []models.SubOrder
+	subQuery := r.db.Preload("Tenant").Preload("OrderItems").Joins("JOIN orders ON orders.id = sub_orders.parent_order_id").Where("orders.payment_status = ?", "paid")
+
+	if startDate != "" && endDate != "" {
+		subQuery = subQuery.Where("orders.created_at >= ? AND orders.created_at <= ?", startDate+" 00:00:00", endDate+" 23:59:59")
+	}
+
+	err = subQuery.Find(&subOrders).Error
+	if err != nil {
+		return 0, 0, nil, nil, err
+	}
+
+	// Fetch all tenants to ensure those with 0 revenue are also included
+	var tenants []models.User
+	err = r.db.Where("role = ?", "tenant").Find(&tenants).Error
+	if err != nil {
+		return 0, 0, nil, nil, err
+	}
+
+	return totalRevenue, totalOrders, subOrders, tenants, nil
+}
+
+func (r *orderRepository) GetTenantIncomeReport(tenantID uuid.UUID, startDate, endDate string) ([]models.SubOrder, error) {
+	var subOrders []models.SubOrder
+	query := r.db.Preload("OrderItems.Menu").Joins("JOIN orders ON orders.id = sub_orders.parent_order_id").Where("sub_orders.tenant_id = ? AND orders.payment_status = ?", tenantID, "paid")
+
+	if startDate != "" && endDate != "" {
+		query = query.Where("orders.created_at >= ? AND orders.created_at <= ?", startDate+" 00:00:00", endDate+" 23:59:59")
+	}
+
+	err := query.Find(&subOrders).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return subOrders, nil
 }

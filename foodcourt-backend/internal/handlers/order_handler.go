@@ -198,3 +198,44 @@ func (h *OrderHandler) GetOrderDetails(c *gin.Context) {
 		"data":    response,
 	})
 }
+
+// Laporan Pemasukan (Reports)
+
+func (h *OrderHandler) GetAdminIncomeReport(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	report, err := h.service.GetAdminIncomeReport(startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil laporan pendapatan sistem"})
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+
+func (h *OrderHandler) GetTenantIncomeReport(c *gin.Context) {
+	tenantIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses ditolak"})
+		return
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token tidak valid"})
+		return
+	}
+
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	report, err := h.service.GetTenantIncomeReport(tenantID, startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil laporan pendapatan tenant"})
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+

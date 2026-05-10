@@ -108,6 +108,7 @@ func main() {
 			tenantRoutes.GET("/tenant/orders", orderHandler.GetTenantOrders)
 			tenantRoutes.PUT("/tenant/orders/:id/status", orderHandler.UpdateTenantOrderStatus)
 			tenantRoutes.GET("/tenant/earnings", orderHandler.GetTenantEarnings)
+			tenantRoutes.GET("/tenant/reports/income", orderHandler.GetTenantIncomeReport)
 		}
 
 		// admin / kasir
@@ -120,6 +121,9 @@ func main() {
 			// Manajemen Tenant oleh Admin
 			adminRoutes.GET("/admin/tenants", userHandler.GetTenants)
 			adminRoutes.POST("/admin/tenants", userHandler.Register)
+
+			// Laporan Admin
+			adminRoutes.GET("/admin/reports/income", orderHandler.GetAdminIncomeReport)
 		}
 	}
 
