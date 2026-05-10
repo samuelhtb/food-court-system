@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,11 +11,12 @@ import (
 )
 
 type OrderHandler struct {
-	service services.OrderService
+	service         services.OrderService
+	midtransService services.MidtransService
 }
 
-func NewOrderHandler(service services.OrderService) *OrderHandler {
-	return &OrderHandler{service}
+func NewOrderHandler(service services.OrderService, midtransService services.MidtransService) *OrderHandler {
+	return &OrderHandler{service, midtransService}
 }
 
 func (h *OrderHandler) Create(c *gin.Context) {
@@ -32,9 +34,25 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 
 	// Add order_id to JSON response
-	c.JSON(http.StatusCreated, gin.H{
-		"message":  "Pesanan berhasil dibuat!",
-		"order_id": orderID,
+	var midtransToken string
+	if req.PaymentMethod == "qris" {
+		order, err := h.service.GetOrderWithDetails(orderID)
+		if err != nil {
+			log.Printf("Gagal mengambil detail pesanan untuk Midtrans: %v", err)
+		} else {
+			token, err := h.midtransService.CreateSnapTransaction(order)
+			if err != nil {
+				log.Printf("Gagal membuat transaksi Midtrans: %v", err)
+			} else {
+				midtransToken = token
+			}
+		}
+	}
+
+	c.JSON(http.StatusCreated, dto.CreateOrderResponse{
+		Message:       "Pesanan berhasil dibuat!",
+		OrderID:       orderID,
+		MidtransToken: midtransToken,
 	})
 }
 
@@ -153,8 +171,71 @@ func (h *OrderHandler) GetOrderDetails(c *gin.Context) {
 		return
 	}
 
+	// Transformasi ke DTO untuk meratakan rincian item (flattening)
+	var items []dto.TrackOrderItemResponse
+	for _, so := range order.SubOrders {
+		for _, it := range so.OrderItems {
+			items = append(items, dto.TrackOrderItemResponse{
+				MenuName: it.Menu.Name,
+				Quantity: it.Quantity,
+				Price:    it.PriceAtOrder,
+			})
+		}
+	}
+
+	response := dto.TrackOrderResponse{
+		ID:            order.ID,
+		CustomerName:  order.CustomerName,
+		PaymentMethod: order.PaymentMethod,
+		PaymentStatus: order.PaymentStatus,
+		OrderStatus:   order.OrderStatus,
+		TotalAmount:   order.TotalAmount,
+		Items:         items,
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Detail pesanan berhasil diambil",
-		"data":    order,
+		"data":    response,
 	})
 }
+
+// Laporan Pemasukan (Reports)
+
+func (h *OrderHandler) GetAdminIncomeReport(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	report, err := h.service.GetAdminIncomeReport(startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil laporan pendapatan sistem"})
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+
+func (h *OrderHandler) GetTenantIncomeReport(c *gin.Context) {
+	tenantIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses ditolak"})
+		return
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token tidak valid"})
+		return
+	}
+
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	report, err := h.service.GetTenantIncomeReport(tenantID, startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil laporan pendapatan tenant"})
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+

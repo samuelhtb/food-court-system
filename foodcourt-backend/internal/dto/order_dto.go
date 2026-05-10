@@ -14,6 +14,57 @@ type CreateOrderRequest struct {
 	Items          []OrderItemRequest `json:"items" binding:"required,min=1,dive"`
 }
 
+type CreateOrderResponse struct {
+	Message       string    `json:"message"`
+	OrderID       uuid.UUID `json:"order_id"`
+	MidtransToken string    `json:"midtrans_token,omitempty"`
+}
+
+
 type UpdateSubOrderStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=diproses dimasak siap_diambil selesai"`
+	Status string `json:"status" binding:"required,oneof=menunggu_pembayaran diproses selesai"`
+}
+
+type TrackOrderItemResponse struct {
+	MenuName string  `json:"name"`
+	Quantity int     `json:"quantity"`
+	Price    float64 `json:"price"`
+}
+
+type TrackOrderResponse struct {
+	ID            uuid.UUID                `json:"id"`
+	CustomerName  string                   `json:"customer_name"`
+	PaymentMethod string                   `json:"payment_method"`
+	PaymentStatus string                   `json:"payment_status"`
+	OrderStatus   string                   `json:"order_status"`
+	TotalAmount   float64                  `json:"total_amount"`
+	Items         []TrackOrderItemResponse `json:"items"`
+}
+
+// Laporan Pemasukan (Income Reports)
+
+type TenantIncomeBreakdown struct {
+	TenantID    string  `json:"tenant_id"`
+	TenantName  string  `json:"tenant_name"`
+	Revenue     float64 `json:"revenue"`
+	TotalOrders int64   `json:"total_orders"`
+}
+
+type AdminIncomeReportResponse struct {
+	TotalRevenue float64                 `json:"total_revenue"`
+	TotalOrders  int64                   `json:"total_orders"`
+	Breakdown    []TenantIncomeBreakdown `json:"breakdown"`
+}
+
+type TenantSalesHistory struct {
+	MenuName     string  `json:"menu_name"`
+	QuantitySold int     `json:"quantity_sold"`
+	Revenue      float64 `json:"revenue"`
+	PurchaseDate string  `json:"purchase_date"`
+}
+
+type TenantIncomeReportResponse struct {
+	TotalRevenue float64              `json:"total_revenue"`
+	TotalOrders  int64                `json:"total_orders"`
+	History      []TenantSalesHistory `json:"history"`
 }

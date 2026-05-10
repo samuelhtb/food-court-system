@@ -8,6 +8,7 @@ import (
 type UserRepository interface {
 	CreateUser(user *models.User) error
 	GetUserByEmail(email string) (*models.User, error)
+	GetUsersByRole(role string) ([]models.User, error)
 }
 
 type userRepository struct {
@@ -32,4 +33,10 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
 		return nil, err // Mengembalikan error jika email tidak ditemukan
 	}
 	return &user, nil
+}
+
+func (r *userRepository) GetUsersByRole(role string) ([]models.User, error) {
+	var users []models.User
+	err := r.db.Where("role = ?", role).Find(&users).Error
+	return users, err
 }

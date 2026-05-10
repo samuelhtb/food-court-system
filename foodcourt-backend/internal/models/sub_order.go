@@ -13,5 +13,8 @@ type SubOrder struct {
 	TenantStatus  string     `gorm:"type:varchar(50);default:'menunggu_pembayaran'" json:"tenant_status"`
 	CreatedAt     time.Time  `json:"created_at"`
 
+	ParentOrder Order `gorm:"foreignKey:ParentOrderID" json:"parent_order,omitempty"`
+	Tenant      User  `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
+
 	OrderItems []OrderItem `gorm:"foreignKey:SubOrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 }

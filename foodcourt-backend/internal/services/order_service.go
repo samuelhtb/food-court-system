@@ -17,6 +17,8 @@ type OrderService interface {
 	MarkOrderAsPaid(orderID uuid.UUID) error
 	GetTenantEarnings(tenantID uuid.UUID) (float64, int64, error)
 	GetOrderWithDetails(orderID uuid.UUID) (*models.Order, error)
+	GetAdminIncomeReport(startDate, endDate string) (*dto.AdminIncomeReportResponse, error)
+	GetTenantIncomeReport(tenantID uuid.UUID, startDate, endDate string) (*dto.TenantIncomeReportResponse, error)
 }
 
 type orderService struct {
@@ -141,3 +143,88 @@ func (s *orderService) GetTenantEarnings(tenantID uuid.UUID) (float64, int64, er
 func (s *orderService) GetOrderWithDetails(orderID uuid.UUID) (*models.Order, error) {
 	return s.orderRepo.GetOrderWithDetails(orderID)
 }
+
+func (s *orderService) GetAdminIncomeReport(startDate, endDate string) (*dto.AdminIncomeReportResponse, error) {
+	totalRev, totalOrders, subOrders, tenants, err := s.orderRepo.GetAdminIncomeReport(startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map to aggregate by tenant
+	tenantMap := make(map[string]*dto.TenantIncomeBreakdown)
+
+	// Initialize all tenants with 0 revenue
+	for _, t := range tenants {
+		tenantMap[t.ID] = &dto.TenantIncomeBreakdown{
+			TenantID:    t.ID,
+			TenantName:  t.TenantName,
+			Revenue:     0,
+			TotalOrders: 0,
+		}
+	}
+
+	for _, sub := range subOrders {
+		tenantID := sub.TenantID.String()
+		if _, exists := tenantMap[tenantID]; !exists {
+			// Fallback if somehow a suborder has a tenant not in the user table (shouldn't happen but just in case)
+			tenantMap[tenantID] = &dto.TenantIncomeBreakdown{
+				TenantID:    tenantID,
+				TenantName:  sub.Tenant.TenantName,
+				Revenue:     0,
+				TotalOrders: 0,
+			}
+		}
+
+		tenantMap[tenantID].TotalOrders++
+		for _, item := range sub.OrderItems {
+			tenantMap[tenantID].Revenue += (float64(item.Quantity) * item.PriceAtOrder)
+		}
+	}
+
+	// Convert map to slice
+	var breakdown []dto.TenantIncomeBreakdown
+	for _, b := range tenantMap {
+		breakdown = append(breakdown, *b)
+	}
+
+	return &dto.AdminIncomeReportResponse{
+		TotalRevenue: totalRev,
+		TotalOrders:  totalOrders,
+		Breakdown:    breakdown,
+	}, nil
+}
+
+func (s *orderService) GetTenantIncomeReport(tenantID uuid.UUID, startDate, endDate string) (*dto.TenantIncomeReportResponse, error) {
+	subOrders, err := s.orderRepo.GetTenantIncomeReport(tenantID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalRev float64
+	var totalOrders int64 = int64(len(subOrders))
+
+	var history []dto.TenantSalesHistory
+
+	for _, sub := range subOrders {
+		for _, item := range sub.OrderItems {
+			revenue := float64(item.Quantity) * item.PriceAtOrder
+			totalRev += revenue
+
+			history = append(history, dto.TenantSalesHistory{
+				MenuName:     item.Menu.Name,
+				QuantitySold: item.Quantity,
+				Revenue:      revenue,
+				PurchaseDate: sub.CreatedAt.Format("2006-01-02 15:04:05"),
+			})
+		}
+	}
+
+	return &dto.TenantIncomeReportResponse{
+		TotalRevenue: totalRev,
+		TotalOrders:  totalOrders,
+		History:      history,
+	}, nil
+}
+
+
+

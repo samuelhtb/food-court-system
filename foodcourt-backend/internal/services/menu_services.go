@@ -12,6 +12,7 @@ import (
 type MenuService interface {
 	CreateMenu(tenantID uuid.UUID, req dto.CreateMenuRequest) error
 	GetMenus(tenantID uuid.UUID) ([]dto.MenuResponse, error)
+	GetPublicMenus() ([]dto.MenuResponse, error)
 	UpdateMenu(id uuid.UUID, tenantID uuid.UUID, req dto.UpdateMenuRequest) error
 	DeleteMenu(id uuid.UUID, tenantID uuid.UUID) error
 }
@@ -39,6 +40,27 @@ func (s *menuService) CreateMenu(tenantID uuid.UUID, req dto.CreateMenuRequest) 
 
 func (s *menuService) GetMenus(tenantID uuid.UUID) ([]dto.MenuResponse, error) {
 	menus, err := s.repo.GetMenusByTenantID(tenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []dto.MenuResponse
+	for _, m := range menus {
+		responses = append(responses, dto.MenuResponse{
+			ID:          m.ID,
+			Name:        m.Name,
+			Description: m.Description,
+			Price:       m.Price,
+			Stock:       m.Stock,
+			ImageURL:    m.ImageURL,
+			IsAvailable: m.IsAvailable,
+		})
+	}
+	return responses, nil
+}
+
+func (s *menuService) GetPublicMenus() ([]dto.MenuResponse, error) {
+	menus, err := s.repo.GetAllMenus()
 	if err != nil {
 		return nil, err
 	}
