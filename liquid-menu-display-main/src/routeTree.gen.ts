@@ -19,6 +19,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TenantOrdersRouteImport } from './routes/tenant.orders'
 import { Route as TenantMenusRouteImport } from './routes/tenant.menus'
 import { Route as TenantEarningsRouteImport } from './routes/tenant.earnings'
+import { Route as AdminTenantsRouteImport } from './routes/admin.tenants'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 
 const TrackOrderRoute = TrackOrderRouteImport.update({
@@ -71,6 +72,11 @@ const TenantEarningsRoute = TenantEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => TenantRoute,
 } as any)
+const AdminTenantsRoute = AdminTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/tenant': typeof TenantRouteWithChildren
   '/track-order': typeof TrackOrderRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/tenants': typeof AdminTenantsRoute
   '/tenant/earnings': typeof TenantEarningsRoute
   '/tenant/menus': typeof TenantMenusRoute
   '/tenant/orders': typeof TenantOrdersRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/track-order': typeof TrackOrderRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/tenants': typeof AdminTenantsRoute
   '/tenant/earnings': typeof TenantEarningsRoute
   '/tenant/menus': typeof TenantMenusRoute
   '/tenant/orders': typeof TenantOrdersRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/tenant': typeof TenantRouteWithChildren
   '/track-order': typeof TrackOrderRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/tenants': typeof AdminTenantsRoute
   '/tenant/earnings': typeof TenantEarningsRoute
   '/tenant/menus': typeof TenantMenusRoute
   '/tenant/orders': typeof TenantOrdersRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/tenant'
     | '/track-order'
     | '/admin/orders'
+    | '/admin/tenants'
     | '/tenant/earnings'
     | '/tenant/menus'
     | '/tenant/orders'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/track-order'
     | '/admin/orders'
+    | '/admin/tenants'
     | '/tenant/earnings'
     | '/tenant/menus'
     | '/tenant/orders'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/tenant'
     | '/track-order'
     | '/admin/orders'
+    | '/admin/tenants'
     | '/tenant/earnings'
     | '/tenant/menus'
     | '/tenant/orders'
@@ -235,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantEarningsRouteImport
       parentRoute: typeof TenantRoute
     }
+    '/admin/tenants': {
+      id: '/admin/tenants'
+      path: '/tenants'
+      fullPath: '/admin/tenants'
+      preLoaderRoute: typeof AdminTenantsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/orders': {
       id: '/admin/orders'
       path: '/orders'
@@ -247,11 +266,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminTenantsRoute: typeof AdminTenantsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminTenantsRoute: AdminTenantsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

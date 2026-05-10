@@ -92,3 +92,25 @@ func (h *UserHandler) Login(c *gin.Context) {
 		"name":    user.Name,
 	})
 }
+
+func (h *UserHandler) GetTenants(c *gin.Context) {
+	tenants, err := h.userService.GetTenants()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var response []dto.UserResponse
+	for _, t := range tenants {
+		response = append(response, dto.UserResponse{
+			ID:         t.ID,
+			Username:   t.Username,
+			Email:      t.Email,
+			Name:       t.Name,
+			Role:       t.Role,
+			TenantName: t.TenantName,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response})
+}

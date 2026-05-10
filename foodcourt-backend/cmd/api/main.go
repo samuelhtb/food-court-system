@@ -116,6 +116,10 @@ func main() {
 		{
 			adminRoutes.GET("/admin/orders", orderHandler.GetAllOrders)
 			adminRoutes.PUT("/admin/orders/:id/pay", orderHandler.MarkOrderAsPaid)
+
+			// Manajemen Tenant oleh Admin
+			adminRoutes.GET("/admin/tenants", userHandler.GetTenants)
+			adminRoutes.POST("/admin/tenants", userHandler.Register)
 		}
 	}
 
