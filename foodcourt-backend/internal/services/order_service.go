@@ -203,40 +203,28 @@ func (s *orderService) GetTenantIncomeReport(tenantID uuid.UUID, startDate, endD
 	var totalRev float64
 	var totalOrders int64 = int64(len(subOrders))
 
-	// Map to aggregate by menu
-	menuMap := make(map[string]*dto.MenuIncomeBreakdown)
+	var history []dto.TenantSalesHistory
 
 	for _, sub := range subOrders {
 		for _, item := range sub.OrderItems {
-			menuID := item.MenuID.String()
 			revenue := float64(item.Quantity) * item.PriceAtOrder
-			
 			totalRev += revenue
 
-			if _, exists := menuMap[menuID]; !exists {
-				menuMap[menuID] = &dto.MenuIncomeBreakdown{
-					MenuID:       menuID,
-					MenuName:     item.Menu.Name,
-					QuantitySold: 0,
-					Revenue:      0,
-				}
-			}
-
-			menuMap[menuID].QuantitySold += item.Quantity
-			menuMap[menuID].Revenue += revenue
+			history = append(history, dto.TenantSalesHistory{
+				MenuName:     item.Menu.Name,
+				QuantitySold: item.Quantity,
+				Revenue:      revenue,
+				PurchaseDate: sub.CreatedAt.Format("2006-01-02 15:04:05"),
+			})
 		}
-	}
-
-	var items []dto.MenuIncomeBreakdown
-	for _, m := range menuMap {
-		items = append(items, *m)
 	}
 
 	return &dto.TenantIncomeReportResponse{
 		TotalRevenue: totalRev,
 		TotalOrders:  totalOrders,
-		Items:        items,
+		History:      history,
 	}, nil
 }
+
 
 

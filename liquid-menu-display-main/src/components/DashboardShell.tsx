@@ -31,7 +31,7 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="glass-strong sticky top-0 hidden h-screen w-64 flex-col gap-2 border-r p-6 md:flex">
+      <aside className="glass-strong sticky top-0 hidden h-screen w-64 flex-col gap-2 border-r p-6 md:flex print:hidden">
         <Link to="/" className="mb-8 flex items-center gap-2 font-display text-xl font-bold text-burgundy">
           <ChefHat className="h-6 w-6" /> Saji
         </Link>

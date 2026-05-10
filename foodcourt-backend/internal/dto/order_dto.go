@@ -56,15 +56,15 @@ type AdminIncomeReportResponse struct {
 	Breakdown    []TenantIncomeBreakdown `json:"breakdown"`
 }
 
-type MenuIncomeBreakdown struct {
-	MenuID       string  `json:"menu_id"`
+type TenantSalesHistory struct {
 	MenuName     string  `json:"menu_name"`
 	QuantitySold int     `json:"quantity_sold"`
 	Revenue      float64 `json:"revenue"`
+	PurchaseDate string  `json:"purchase_date"`
 }
 
 type TenantIncomeReportResponse struct {
-	TotalRevenue float64               `json:"total_revenue"`
-	TotalOrders  int64                 `json:"total_orders"`
-	Items        []MenuIncomeBreakdown `json:"items"`
+	TotalRevenue float64              `json:"total_revenue"`
+	TotalOrders  int64                `json:"total_orders"`
+	History      []TenantSalesHistory `json:"history"`
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/DashboardShell";
-import { UtensilsCrossed, ClipboardList, Wallet, TrendingUp, Receipt, Filter, Loader2 } from "lucide-react";
+import { UtensilsCrossed, ClipboardList, Wallet, TrendingUp, Receipt, Filter, Loader2, Download } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatRupiah } from "@/stores/cart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,24 +89,33 @@ function Earnings() {
             <Stat icon={<Receipt />} label="Total Pesanan" value={String(data?.total_orders || 0)} />
           </div>
 
-          {data?.items && data.items.length > 0 && (
-            <div className="glass-strong rounded-3xl p-8">
-              <h2 className="mb-6 font-display text-2xl font-bold">Rincian Menu</h2>
+          {data?.history && data.history.length > 0 && (
+            <div className="glass-strong rounded-3xl p-8 bg-card">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="font-display text-2xl font-bold">Riwayat Penjualan Menu</h2>
+                <Button onClick={() => window.print()} className="bg-burgundy hover:bg-burgundy/90 text-white rounded-xl shadow-lg shadow-burgundy/20 print:hidden">
+                  <Download className="mr-2 h-4 w-4" /> Download PDF
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="text-muted-foreground">
+                  <thead className="text-muted-foreground border-b border-border/50">
                     <tr>
-                      <th className="pb-4 font-medium">Nama Menu</th>
-                      <th className="pb-4 font-medium text-right">Terjual</th>
+                      <th className="pb-4 font-medium w-16">No</th>
+                      <th className="pb-4 font-medium">Menu</th>
+                      <th className="pb-4 font-medium text-center">Jumlah</th>
+                      <th className="pb-4 font-medium">Tanggal Pembelian</th>
                       <th className="pb-4 font-medium text-right">Pendapatan</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {data.items.map((item: any) => (
-                      <tr key={item.menu_id}>
+                    {data.history.map((item: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-4 text-muted-foreground">{idx + 1}</td>
                         <td className="py-4 font-medium">{item.menu_name}</td>
-                        <td className="py-4 text-right">{item.quantity_sold}</td>
-                        <td className="py-4 text-right font-medium">{formatRupiah(item.revenue)}</td>
+                        <td className="py-4 text-center">{item.quantity_sold}</td>
+                        <td className="py-4 text-muted-foreground">{item.purchase_date}</td>
+                        <td className="py-4 text-right font-medium text-burgundy">{formatRupiah(item.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
