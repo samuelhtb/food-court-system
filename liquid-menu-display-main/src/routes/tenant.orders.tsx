@@ -39,23 +39,46 @@ function TenantOrders() {
         <div className="space-y-3">
           {orders.map((o) => {
             const items = o.order_items || [];
+            const customerName = o.parent_order?.customer_name || "Customer";
             const total = items.reduce((acc: number, curr: any) => acc + (curr.price_at_order * curr.quantity), 0);
-            const itemCount = items.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
 
             return (
-            <div key={o.id} className="glass flex flex-col gap-3 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="font-semibold">Sub-Order #{o.id?.slice(0, 8)}</div>
-                <div className="text-xs text-muted-foreground">
-                   {itemCount} items · {formatRupiah(total)}
+            <div key={o.id} className="glass flex flex-col gap-4 rounded-3xl p-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex-1">
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="font-display text-xl font-bold">Order #{o.id?.slice(0, 8)}</div>
+                  <span className="rounded-full bg-burgundy/10 px-3 py-1 text-[10px] font-bold text-burgundy uppercase tracking-widest">
+                    {customerName}
+                  </span>
                 </div>
+                
+                <div className="space-y-2 border-l-2 border-burgundy/20 pl-4">
+                  {items.map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between text-sm">
+                      <span className="font-medium">
+                        {item.menu?.name || "Unknown Menu"} 
+                        <span className="ml-2 text-muted-foreground text-xs">×{item.quantity}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 font-bold text-burgundy">{formatRupiah(total)}</div>
               </div>
-              <Select defaultValue={o.tenant_status || o.status} onValueChange={(v) => updateStatus(o.id, v)}>
-                <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+              <div className="flex flex-col items-end gap-2">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Order Status</span>
+                <Select defaultValue={o.tenant_status || o.status} onValueChange={(v) => updateStatus(o.id, v)}>
+                  <SelectTrigger className="w-48 rounded-xl border-none bg-muted/50 font-medium"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl border-none">
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="rounded-lg">
+                        {s.replace("_", " ").toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             );
           })}

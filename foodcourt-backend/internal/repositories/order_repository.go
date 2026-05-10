@@ -58,7 +58,8 @@ func (r *orderRepository) GetSubOrdersByTenantID(tenantID uuid.UUID) ([]models.S
 	var subOrders []models.SubOrder
 	// Preload wajib agar Tenant tahu harus masak apa
 	// Hanya tampilkan jika status pembayaran di tabel utama sudah "paid"
-	err := r.db.Preload("OrderItems").
+	// Preload ParentOrder (untuk nama pembeli) dan OrderItems.Menu (untuk nama menu)
+	err := r.db.Preload("ParentOrder").Preload("OrderItems.Menu").
 		Joins("JOIN orders ON orders.id = sub_orders.parent_order_id").
 		Where("sub_orders.tenant_id = ? AND orders.payment_status = ?", tenantID, "paid").
 		Find(&subOrders).Error
