@@ -41,7 +41,7 @@ func (r *menuRepository) GetMenusByTenantID(tenantID uuid.UUID) ([]models.Menu, 
 
 func (r *menuRepository) GetAllMenus() ([]models.Menu, error) {
 	var menus []models.Menu
-	err := r.db.Where("is_available = ?", true).Find(&menus).Error
+	err := r.db.Preload("Tenant").Where("is_available = ?", true).Find(&menus).Error
 	return menus, err
 }
 

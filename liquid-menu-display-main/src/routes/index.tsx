@@ -75,7 +75,14 @@ function Index() {
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <h3 className="font-display text-xl font-bold">{m.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display text-xl font-bold">{m.name}</h3>
+                    {m.tenant_name && (
+                      <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground/60 bg-muted px-2 py-0.5 rounded-full">
+                        {m.tenant_name}
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{m.description}</p>
                   <div className="mt-auto flex items-center justify-between pt-4">
                     <span className="text-lg font-bold text-burgundy">{formatRupiah(m.price)}</span>

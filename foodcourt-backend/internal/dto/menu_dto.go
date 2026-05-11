@@ -27,4 +27,5 @@ type MenuResponse struct {
 	Stock       int       `json:"stock"`
 	ImageURL    string    `json:"image_url"`
 	IsAvailable bool      `json:"is_available"`
+	TenantName  string    `json:"tenant_name,omitempty"`
 }

@@ -75,6 +75,7 @@ func (s *menuService) GetPublicMenus() ([]dto.MenuResponse, error) {
 			Stock:       m.Stock,
 			ImageURL:    m.ImageURL,
 			IsAvailable: m.IsAvailable,
+			TenantName:  m.Tenant.TenantName,
 		})
 	}
 	return responses, nil

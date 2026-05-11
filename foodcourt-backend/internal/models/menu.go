@@ -17,6 +17,7 @@ type Menu struct {
 	Stock       int            `gorm:"type:int;not null;default:0" json:"stock"` // Kita pertahankan stock
 	ImageURL    string         `gorm:"type:varchar(255)" json:"image_url"`
 	IsAvailable bool           `gorm:"default:true" json:"is_available"`
+	Tenant      User           `gorm:"foreignKey:TenantID" json:"tenant"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`

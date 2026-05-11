@@ -9,6 +9,7 @@ export interface Menu {
   stock: number;
   image_url?: string;
   is_available?: boolean;
+  tenant_name?: string;
 }
 
 export interface CartItem extends Menu {
