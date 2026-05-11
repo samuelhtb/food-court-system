@@ -53,9 +53,10 @@ function TenantMenus() {
   const load = async () => {
     try {
       const res = await api<any>("/tenant/menus");
-      setMenus(res.data || res.menus || res);
+      setMenus(res.data || res.menus || (Array.isArray(res) ? res : []));
     } catch (e: any) {
       toast.error(e.message);
+      setMenus([]);
     }
   };
 

@@ -44,7 +44,7 @@ func (s *menuService) GetMenus(tenantID uuid.UUID) ([]dto.MenuResponse, error) {
 		return nil, err
 	}
 
-	var responses []dto.MenuResponse
+	responses := []dto.MenuResponse{}
 	for _, m := range menus {
 		responses = append(responses, dto.MenuResponse{
 			ID:          m.ID,
@@ -65,7 +65,7 @@ func (s *menuService) GetPublicMenus() ([]dto.MenuResponse, error) {
 		return nil, err
 	}
 
-	var responses []dto.MenuResponse
+	responses := []dto.MenuResponse{}
 	for _, m := range menus {
 		responses = append(responses, dto.MenuResponse{
 			ID:          m.ID,

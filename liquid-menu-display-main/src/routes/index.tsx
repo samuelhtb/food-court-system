@@ -20,8 +20,11 @@ function Index() {
 
   useEffect(() => {
     api<any>("/menus", { auth: false })
-      .then((d) => setMenus(d.data || d.menus || d))
-      .catch((e) => { toast.error(e.message); setMenus([]); });
+      .then((d) => setMenus(d.data || d.menus || (Array.isArray(d) ? d : [])))
+      .catch((e) => { 
+        toast.error(e.message); 
+        setMenus([]); 
+      });
   }, []);
 
   return (
