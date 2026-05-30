@@ -73,14 +73,14 @@ export default function MidtransPayment({
       }
     };
 
-    if (script.complete || script.readyState === "complete") {
+    if (window.snap) {
       triggerSnap();
     } else {
-      script.onload = triggerSnap;
+      script.addEventListener("load", triggerSnap);
     }
 
     return () => {
-      // We don't remove the script to avoid re-loading it multiple times
+      script.removeEventListener("load", triggerSnap);
     };
   }, [token, orderId, onSuccess, onPending, onError, onClose]);
 
